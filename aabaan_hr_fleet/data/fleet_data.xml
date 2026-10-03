@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fleet_service_type_fine" model="fleet.service.type">
+        <field name="name">Traffic Fine (Police / Salik / RTA)</field>
+        <field name="category">service</field>
+    </record>
+
+    <record id="payslip_input_fine" model="hr.payslip.input.type">
+        <field name="name">Vehicle Fine Recovery</field>
+        <field name="code">FINE</field>
+    </record>
+</odoo>

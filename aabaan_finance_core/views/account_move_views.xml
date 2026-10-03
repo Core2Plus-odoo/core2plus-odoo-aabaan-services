@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_move_list_recovery" model="ir.ui.view">
+        <field name="name">account.move.list.aabaan.recovery</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <list edit="1" create="0" decoration-danger="recovery_bucket == 'previous'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="invoice_date" optional="show"/>
+                <field name="invoice_date_due"/>
+                <field name="recovery_bucket"/>
+                <field name="aabaan_services" optional="show"/>
+                <field name="recovery_status" optional="show"/>
+                <field name="recovery_promise_date" optional="show"/>
+                <field name="payment_state"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="amount_residual" sum="Outstanding"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- §5 recovery grid: entity × service rows, Previous/Current/Future
+         columns, outstanding as the measure — one screen. -->
+    <record id="view_move_pivot_recovery" model="ir.ui.view">
+        <field name="name">account.move.pivot.aabaan.recovery</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <pivot sample="0">
+                <field name="company_id" type="row"/>
+                <field name="aabaan_services" type="row"/>
+                <field name="recovery_bucket" type="col"/>
+                <field name="amount_residual_signed" type="measure" string="Outstanding"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_recovery_report" model="ir.actions.act_window">
+        <field name="name">Recovery</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="view_id" ref="view_move_list_recovery"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_move_list_recovery')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_move_pivot_recovery')})]"/>
+        <field name="domain">[('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('payment_state', 'in', ('not_paid', 'partial'))]</field>
+        <field name="context">{'group_by': 'recovery_bucket'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing to recover</p>
+            <p>Open customer invoices appear here classified as Previous
+               (before Aug 2026), Current and Future — filter and group by
+               branch and service via the analytic dimensions.</p>
+        </field>
+    </record>
+
+    <!-- The counterweight to not blocking journal entries (see
+         _aabaan_check_analytic_segregation): an untagged entry posts, but
+         it queues here until someone tags it, so nothing leaks out of a
+         branch total unseen. -->
+    <record id="view_move_list_untagged" model="ir.ui.view">
+        <field name="name">account.move.list.aabaan.untagged</field>
+        <field name="model">account.move</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="move_type"/>
+                <field name="journal_id" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="ref" optional="hide"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_untagged_for_branch" model="ir.actions.act_window">
+        <field name="name">Untagged for Branch</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_move_list_untagged"/>
+        <field name="domain">[('aabaan_analytic_incomplete', '=', True)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Every posted amount reaches a branch</p>
+            <p>Posted entries missing their branch — and, on customer
+               invoices, their service — analytic tag appear here. Their
+               amounts are absent from the Branch P&amp;L until they are
+               tagged.</p>
+            <p>Machine-written entries are the usual source: payroll, asset
+               depreciation, stock/COGS, reconciliation write-offs and
+               exchange differences. Open the entry, set the analytic
+               distribution on the expense line, and it leaves this list by
+               itself.</p>
+        </field>
+    </record>
+
+    <record id="view_move_form_untagged_banner" model="ir.ui.view">
+        <field name="name">account.move.form.aabaan.untagged</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <field name="aabaan_analytic_incomplete" invisible="1"/>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not aabaan_analytic_incomplete">
+                    This entry has a line with no branch analytic tag, so its
+                    amount is missing from the Branch P&amp;L. Set the
+                    analytic distribution on the line to clear this.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <menuitem id="menu_recovery_report" name="Recovery"
+              parent="account.menu_finance_receivables"
+              action="aabaan_finance_core.action_recovery_report"
+              sequence="9"/>
+</odoo>

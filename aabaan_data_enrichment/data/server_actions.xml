@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Re-runnable sweeps, from the Action menu (list views). Both only
+         fill empty fields, so re-running is always safe. -->
+    <record id="action_tag_emirates" model="ir.actions.server">
+        <field name="name">Aabaan: Tag Contract Emirates</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <!-- Cleanup audit: an occasional admin sweep, not a daily tool -
+             keep it out of every salesperson's Action menu. -->
+        <field name="groups_id" eval="[(6, 0, [ref('sales_team.group_sale_manager')])]"/>
+        <field name="state">code</field>
+        <field name="code">
+res = model.aabaan_tag_emirates()
+if res['missing_field']:
+    msg = "The x_emirate_regime field does not exist on this database — nothing to tag."
+else:
+    msg = "Tagged %(tagged)s contract(s). %(no_evidence)s had no usable evidence. %(already)s were already tagged." % res
+action = {
+    'type': 'ir.actions.client', 'tag': 'display_notification',
+    'params': {'title': "Emirate tagging", 'message': msg,
+               'type': 'warning' if res['missing_field'] else 'success',
+               'sticky': True},
+}
+        </field>
+    </record>
+
+    <record id="action_enrich_contacts" model="ir.actions.server">
+        <field name="name">Aabaan: Enrich Contacts</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="groups_id" eval="[(6, 0, [ref('sales_team.group_sale_manager')])]"/>
+        <field name="state">code</field>
+        <field name="code">
+res = model.aabaan_enrich_contacts()
+msg = ("Of %(customers)s customers: emirate/state set on %(located)s, "
+       "industry set on %(classified)s. Only empty fields were filled; "
+       "each change is noted in the contact's chatter.") % res
+action = {
+    'type': 'ir.actions.client', 'tag': 'display_notification',
+    'params': {'title': "Contact enrichment", 'message': msg,
+               'type': 'success', 'sticky': True},
+}
+        </field>
+    </record>
+</odoo>

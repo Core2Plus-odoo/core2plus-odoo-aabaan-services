@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The one Aaban letterhead. Callers set `company` in scope, then:
+             <t t-call="aabaan_letterhead.header"/>
+             <t t-call="aabaan_letterhead.footer"/>
+         Flat two-tone bands only — CSS triangles render unreliably in
+         wkhtmltopdf and are banned from this letterhead. -->
+
+    <template id="header">
+        <div class="header">
+            <style>
+                .ab-plain { border: none !important; border-collapse: collapse; }
+                .ab-plain td { border: none !important; }
+            </style>
+            <table class="ab-plain" style="width: 100%; font-family: Helvetica, Arial, sans-serif;">
+                <tr>
+                    <td style="vertical-align: middle; padding: 0;">
+                        <table class="ab-plain" style="width: 100%;">
+                            <tr>
+                                <td style="width: 60%; background-color: #1A1A1C; height: 16px; padding: 0; font-size: 1px;">&#160;</td>
+                                <td style="width: 6px; padding: 0; font-size: 1px;">&#160;</td>
+                                <td style="background-color: #EF7D25; height: 16px; padding: 0; font-size: 1px;">&#160;</td>
+                            </tr>
+                        </table>
+                        <table class="ab-plain" style="width: 44%; margin-top: 4px;">
+                            <tr>
+                                <td style="background-color: #EF7D25; height: 6px; padding: 0; font-size: 1px;">&#160;</td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="width: 205px; text-align: right; vertical-align: top; padding: 0 0 0 14px;">
+                        <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"
+                             style="max-height: 56px; max-width: 180px;" alt="Logo"/>
+                        <div t-else="" style="font-size: 20px; font-weight: bold; color: #EF7D25;"
+                             t-esc="company.name"/>
+                        <div style="font-size: 7.5px; color: #EF7D25; font-weight: bold; margin-top: 2px;">
+                            One Stop for Every Service Need!
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+
+    <template id="footer">
+        <div class="footer">
+            <style>
+                .ab-plain { border: none !important; border-collapse: collapse; }
+                .ab-plain td { border: none !important; }
+            </style>
+            <div style="font-family: Helvetica, Arial, sans-serif;">
+                <div style="font-size: 7.5px; text-align: center; color: #9A9AA0; font-style: italic;">
+                    Page <span class="page"/> of <span class="topage"/>
+                </div>
+                <table class="ab-plain" style="width: 100%; font-size: 8.5px; color: #1A1A1C; margin-top: 2px;">
+                    <tr>
+                        <td style="vertical-align: top;">
+                            <div style="color: #EF7D25; font-weight: bold;">Head Office:</div>
+                            <div>Office #126, Bin Saloom Building, Abu Hail, Deira, Dubai.</div>
+                            <div style="color: #EF7D25; font-weight: bold; margin-top: 2px;">Branch Offices (UAE):</div>
+                            <div>Shop #1 &amp; 2, Al Sharq, Al Butina, Sharjah.</div>
+                            <div>Shop #1 &amp; 2, Mohammed Ali Building, Al Nuaimiya, Ajman.</div>
+                        </td>
+                        <td style="vertical-align: bottom; text-align: right;">
+                            <div style="font-weight: bold;">800 AABAN (800 22226)</div>
+                            <div style="font-weight: bold;">+971 55 859 8834 | +971 55 866 6530</div>
+                            <div>infoaabanservices@gmail.com</div>
+                            <div style="color: #58585E; margin-top: 2px;">
+                                <t t-if="company.vat">TRN: <span t-esc="company.vat"/></t>
+                                <t t-if="company.company_registry"> &#183; Trade Licence No: <span t-esc="company.company_registry"/></t>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <table class="ab-plain" style="width: 100%; margin-top: 4px;">
+                    <tr>
+                        <td style="width: 30%; background-color: #EF7D25; height: 8px; padding: 0; font-size: 1px;">&#160;</td>
+                        <td style="width: 6px; padding: 0; font-size: 1px;">&#160;</td>
+                        <td style="background-color: #1A1A1C; height: 8px; padding: 0; font-size: 1px;">&#160;</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </template>
+</odoo>

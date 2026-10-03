@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sale_order_template_kanban_aabaan" model="ir.ui.view">
+        <field name="name">sale.order.template.kanban.aabaan</field>
+        <field name="model">sale.order.template</field>
+        <field name="arch" type="xml">
+            <kanban default_order="name">
+                <templates>
+                    <t t-name="card">
+                        <div class="p-2">
+                            <field name="name" class="fw-bold fs-5"/>
+                            <div class="text-muted mt-1">
+                                <field name="aabaan_line_count"/> lines ·
+                                <field name="aabaan_usage_count"/> quotations created
+                            </div>
+                            <div class="mt-2">
+                                <button name="action_view_usage" type="object"
+                                        class="btn btn-sm btn-secondary">
+                                    View quotations
+                                </button>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_templates_library" model="ir.actions.act_window">
+        <field name="name">Templates Library</field>
+        <field name="res_model">sale.order.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_sale_order_template_kanban_aabaan"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Build your first quotation template</p>
+            <p>Templates carry the standard service lines and terms, so a
+            quotation is three clicks: template, customer, send.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_templates_library"
+              name="Templates Library"
+              parent="sale.sale_menu_root"
+              action="action_templates_library"
+              sequence="18"/>
+</odoo>

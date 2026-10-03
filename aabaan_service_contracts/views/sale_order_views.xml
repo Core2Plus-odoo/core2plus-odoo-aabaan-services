@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_service_contracts" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.service.contracts</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="aabaan_contract_cockpit.view_order_form_cockpit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_contract_sites" type="object"
+                        class="oe_stat_button" icon="fa-building-o"
+                        invisible="state != 'sale'">
+                    <field name="contract_sites_count" widget="statinfo"
+                           string="Sites"/>
+                </button>
+                <button name="action_view_contract_documents" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="state != 'sale'">
+                    <field name="contract_documents_count" widget="statinfo"
+                           string="Documents"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='aabaan_invoices']" position="after">
+                <page string="Sites &amp; Compliance" name="aabaan_sites"
+                      invisible="state != 'sale'">
+                    <group>
+                        <group string="Contract Rollup" name="sc_rollup">
+                            <field name="contract_sites_count"/>
+                            <field name="contract_avg_uptime" widget="percentage"/>
+                        </group>
+                        <group string="Renewal Terms" name="sc_renewal">
+                            <field name="contract_notice_period_days"/>
+                            <field name="contract_indexation_clause"/>
+                            <field name="contract_indexation_cap_pct"
+                                   invisible="contract_indexation_clause != 'cpi_linked'"/>
+                        </group>
+                    </group>
+                    <separator string="Sites &amp; SLA"/>
+                    <field name="contract_site_ids"/>
+                    <separator string="Compliance Documents"/>
+                    <field name="contract_document_ids"/>
+                </page>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']"
+                   position="after">
+                <field name="site_id" optional="hide"
+                       domain="[('id', 'child_of', parent.partner_id)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

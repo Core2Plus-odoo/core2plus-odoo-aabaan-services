@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_form2_visit_buttons" model="ir.ui.view">
+        <field name="name">project.task.form.aabaan.visit.buttons</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="sale_order_id" invisible="1"/>
+                <button name="action_create_followup_visit" type="object"
+                        string="Raise Follow-up"
+                        invisible="not sale_order_id"
+                        help="Raise an unbilled follow-up visit against the same contract."/>
+                <button name="action_create_complaint_visit" type="object"
+                        string="Raise Complaint"
+                        invisible="not sale_order_id"
+                        help="Raise an unbilled complaint visit against the same contract."/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

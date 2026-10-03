@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_contract_document_list_embed" model="ir.ui.view">
+        <field name="name">aabaan.contract.document.list.embed</field>
+        <field name="model">aabaan.contract.document</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" decoration-danger="document_status == 'expired'"
+                  decoration-warning="document_status == 'expiring_soon'">
+                <field name="document_type"/>
+                <field name="name"/>
+                <field name="datas" filename="file_name" widget="binary"/>
+                <field name="file_name" column_invisible="1"/>
+                <field name="valid_until"/>
+                <field name="document_status" widget="badge"
+                       decoration-success="document_status in ('valid', 'no_expiry')"
+                       decoration-warning="document_status == 'expiring_soon'"
+                       decoration-danger="document_status == 'expired'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Standalone list for the Documents smart button (shows the owning
+         contract, which the embedded list has no need for). -->
+    <record id="view_contract_document_list_full" model="ir.ui.view">
+        <field name="name">aabaan.contract.document.list.full</field>
+        <field name="model">aabaan.contract.document</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="document_status == 'expired'"
+                  decoration-warning="document_status == 'expiring_soon'">
+                <field name="order_id"/>
+                <field name="document_type"/>
+                <field name="name"/>
+                <field name="datas" filename="file_name" widget="binary"/>
+                <field name="file_name" column_invisible="1"/>
+                <field name="valid_until"/>
+                <field name="document_status" widget="badge"
+                       decoration-success="document_status in ('valid', 'no_expiry')"
+                       decoration-warning="document_status == 'expiring_soon'"
+                       decoration-danger="document_status == 'expired'"/>
+            </list>
+        </field>
+    </record>
+</odoo>

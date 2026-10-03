@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_field_ops" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.field.ops</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="aabaan_visit_schedule.view_order_form_visit_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='aabaan_visit_schedule']" position="inside">
+                <field name="visit_technician_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

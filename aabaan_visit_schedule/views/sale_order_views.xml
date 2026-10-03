@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_visit_schedule" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.visit.schedule</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_generate_visit_schedule" type="object"
+                        string="Generate Visits"
+                        invisible="state != 'sale'"
+                        help="Generate or re-plan the routine visit schedule for this contract. Visits at In Progress or beyond are never touched."/>
+                <button name="action_create_followup_visit" type="object"
+                        string="Raise Follow-up"
+                        invisible="state != 'sale'"
+                        help="Raise an unbilled follow-up visit (infestation found on a routine visit)."/>
+                <button name="action_create_complaint_visit" type="object"
+                        string="Raise Complaint"
+                        invisible="state != 'sale'"
+                        help="Raise an unbilled complaint visit with the contract's SLA deadline."/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_visit_tasks" type="object"
+                        class="oe_stat_button" icon="fa-calendar"
+                        invisible="visit_task_count == 0">
+                    <field name="visit_task_count" widget="statinfo" string="Visits"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='other_information']" position="inside">
+                <group name="aabaan_visit_schedule" string="Visit Schedule">
+                    <field name="is_fnb_premises"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

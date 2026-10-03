@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- P7/P9 — curated NATIVE views; branch × service cuts come from the
+         analytic tags the posting guard guarantees. Budget vs Actual (P8) is
+         the native Budgets app: install "Budgets" in Apps, no code needed. -->
+    <record id="action_branch_pnl" model="ir.actions.act_window">
+        <field name="name">Branch P&amp;L (Analytic Items)</field>
+        <field name="res_model">account.analytic.line</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No analytic items yet</p>
+            <p>Every posted invoice, bill and expense line lands here with its
+               branch and service tags. Pivot rows: analytic account (branch);
+               add the Service Line dimension and financial account for the
+               full Sales − Costs − Expenses view per branch.</p>
+        </field>
+    </record>
+
+    <record id="action_sales_by_branch" model="ir.actions.act_window">
+        <field name="name">Sales Analysis</field>
+        <field name="res_model">sale.report</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No confirmed sales yet</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_management_reports" name="Management Reports"
+              parent="account.menu_finance" sequence="30"/>
+    <menuitem id="menu_branch_pnl" name="Branch P&amp;L"
+              parent="menu_management_reports"
+              action="aabaan_finance_core.action_branch_pnl" sequence="1"/>
+    <menuitem id="menu_sales_analysis" name="Sales Analysis"
+              parent="menu_management_reports"
+              action="aabaan_finance_core.action_sales_by_branch" sequence="2"/>
+    <menuitem id="menu_recovery_link" name="Recovery"
+              parent="menu_management_reports"
+              action="aabaan_finance_core.action_recovery_report" sequence="3"/>
+    <menuitem id="menu_untagged_for_branch" name="Untagged for Branch"
+              parent="menu_management_reports"
+              action="aabaan_finance_core.action_untagged_for_branch"
+              sequence="4"/>
+</odoo>

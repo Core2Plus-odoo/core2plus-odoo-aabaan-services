@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Delegates to the shared Aaban letterhead (aabaan_letterhead) —
+         this also retires the CSS-triangle band here: triangles render
+         unreliably in wkhtmltopdf, which is why the quotation dropped
+         them first. Callers already set `company` in scope. -->
+    <template id="svc_letterhead_header">
+        <t t-call="aabaan_letterhead.header"/>
+    </template>
+
+    <template id="svc_letterhead_footer">
+        <t t-call="aabaan_letterhead.footer"/>
+    </template>
+
+    <template id="svc_ref_table">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="vertical-align: top; padding-top: 8px;">
+                    <div style="font-size: 12px; font-weight: bold; text-transform: uppercase;"
+                         t-esc="doc.partner_id.name or doc.sale_order_id.partner_id.name"/>
+                    <div style="font-size: 9px; color: #58585E; margin-top: 2px;"
+                         t-field="doc.partner_id"
+                         t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                    <div t-if="vals['emirate']" style="font-size: 9px; color: #58585E;">
+                        Emirate: <span t-esc="vals['emirate']"/>
+                    </div>
+                </td>
+                <td style="width: 250px; vertical-align: top; text-align: right;">
+                    <div style="font-size: 17px; font-weight: bold;" t-esc="doc_title"/>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 5px;">
+                        <tr>
+                            <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; padding: 4px 7px; text-align: left;">Visit</td>
+                            <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; padding: 4px 7px; text-align: right;"
+                                t-esc="doc.name"/>
+                        </tr>
+                        <tr t-if="vals['order_ref']">
+                            <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Contract</td>
+                            <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: right; font-weight: bold;"
+                                t-esc="vals['order_ref']"/>
+                        </tr>
+                        <tr t-if="vals['completed_date']">
+                            <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Date</td>
+                            <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: right; font-weight: bold;"
+                                t-esc="vals['completed_date']"/>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </template>
+
+    <template id="svc_signatures">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 34px; font-size: 9.5px;">
+            <tr>
+                <td style="width: 45%; border-top: 1px solid #1A1A1C; padding-top: 5px;">
+                    <div style="font-weight: bold;">For Aaban — Technician</div>
+                    <div t-if="vals['technician']" t-esc="vals['technician']"/>
+                    <div style="color: #9A9AA0; margin-top: 16px;">Signature &amp; date</div>
+                </td>
+                <td style="width: 10%;"/>
+                <td style="width: 45%; border-top: 1px solid #1A1A1C; padding-top: 5px;">
+                    <div style="font-weight: bold;">For the Customer</div>
+                    <div style="color: #9A9AA0; margin-top: 30px;">Name, signature &amp; date</div>
+                </td>
+            </tr>
+        </table>
+    </template>
+
+    <!-- ══ 1. Visit Service Report ══ -->
+    <template id="report_visit_service">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="doc.company_id.sudo() or doc.env.company.sudo()"/>
+                <t t-set="vals" t-value="doc.aabaan_doc_vals()"/>
+                <t t-set="doc_title" t-value="'Service Report'"/>
+                <t t-call="aabaan_service_reports.svc_letterhead_header"/>
+                <div class="article" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
+                    <div style="font-family: Helvetica, Arial, sans-serif; color: #1A1A1C; font-size: 10px; line-height: 1.5;">
+                        <t t-call="aabaan_service_reports.svc_ref_table"/>
+                        <div t-if="not doc.visit_completed_at"
+                             style="margin-top: 10px; border: 1px solid #EF7D25; color: #EF7D25; font-weight: bold; padding: 6px 10px;">
+                            DRAFT — this visit is not completed yet.
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 14px;">
+                            <tr style="background-color: #1A1A1C; color: #FFFFFF;">
+                                <td colspan="2" style="padding: 5px 8px; font-weight: bold;">VISIT DETAILS</td>
+                            </tr>
+                            <tr t-if="vals['visit_type']">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; width: 220px;">Visit type</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; font-weight: bold;" t-esc="vals['visit_type']"/>
+                            </tr>
+                            <tr t-if="vals['technician']">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;">Technician</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; font-weight: bold;" t-esc="vals['technician']"/>
+                            </tr>
+                            <tr t-if="vals['checkin']">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;">Check-in</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;" t-esc="vals['checkin']"/>
+                            </tr>
+                            <tr t-if="vals['checkout']">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;">Check-out</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;">
+                                    <span t-esc="vals['checkout']"/>
+                                    <span t-if="vals['duration']"> (<t t-esc="vals['duration']"/> h on site)</span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 12px;">
+                            <tr style="background-color: #1A1A1C; color: #FFFFFF;">
+                                <td colspan="2" style="padding: 5px 8px; font-weight: bold;">FINDINGS &amp; TREATMENT</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; width: 220px;">Infestation found</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; font-weight: bold;">
+                                    <t t-if="doc.infestation_found">Yes — free follow-up visits every 3 days until clear</t>
+                                    <t t-else="">No</t>
+                                </td>
+                            </tr>
+                            <tr t-if="doc.treatment_summary">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; vertical-align: top;">Treatment carried out</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; white-space: pre-line;" t-esc="doc.treatment_summary"/>
+                            </tr>
+                            <tr t-if="doc.chemicals_used">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; vertical-align: top;">Chemicals / materials used</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE; white-space: pre-line;" t-esc="doc.chemicals_used"/>
+                            </tr>
+                            <tr t-if="doc.followup_task_id">
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;">Follow-up raised</td>
+                                <td style="padding: 4px 8px; border-bottom: 1px solid #ECECEE;" t-esc="doc.followup_task_id.display_name"/>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top: 10px; font-size: 8.5px; color: #58585E;">
+                            All pesticides used are MOCCAE-approved and applied by
+                            municipality-approved technicians.
+                        </div>
+                        <t t-call="aabaan_service_reports.svc_signatures"/>
+                    </div>
+                </div>
+                <t t-call="aabaan_service_reports.svc_letterhead_footer"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- ══ 2. Water-Tank Cleaning Certificate ══ -->
+    <template id="report_tank_certificate">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="guard" t-value="doc.aabaan_certificate_guard('tank')"/>
+                <t t-set="company" t-value="doc.company_id.sudo() or doc.env.company.sudo()"/>
+                <t t-set="vals" t-value="doc.aabaan_doc_vals()"/>
+                <t t-set="doc_title" t-value="'Cleaning Certificate'"/>
+                <t t-call="aabaan_service_reports.svc_letterhead_header"/>
+                <div class="article" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
+                    <div style="font-family: Helvetica, Arial, sans-serif; color: #1A1A1C; font-size: 10px; line-height: 1.6;">
+                        <t t-call="aabaan_service_reports.svc_ref_table"/>
+                        <div style="margin-top: 22px; text-align: center; font-size: 15px; font-weight: bold; letter-spacing: 1px;">
+                            WATER TANK CLEANING &amp; DISINFECTION CERTIFICATE
+                        </div>
+                        <div style="width: 90px; height: 3px; background-color: #EF7D25; margin: 8px auto 18px;"/>
+                        <div style="font-size: 10.5px;">
+                            This is to certify that <span style="font-weight: bold;" t-esc="company.name"/>
+                            has carried out the cleaning and disinfection of the water tank(s) at the
+                            premises of <span style="font-weight: bold;" t-esc="doc.partner_id.name or doc.sale_order_id.partner_id.name"/>
+                            on <span style="font-weight: bold;" t-esc="vals['completed_date']"/>,
+                            in accordance with the applicable municipality standard: full drain-down,
+                            sludge removal, wall scrubbing, disinfection and refill.
+                        </div>
+                        <div style="margin-top: 12px; font-size: 10.5px;">
+                            The tank(s) are fit for use. The recommended service cadence is
+                            <span style="font-weight: bold;">twice per year</span> — the next clean is due
+                            around <span style="font-weight: bold;">six months from the date above</span>.
+                        </div>
+                        <div t-if="doc.treatment_summary" style="margin-top: 12px; font-size: 9px; color: #58585E; white-space: pre-line;">
+                            <span style="font-weight: bold; color: #1A1A1C;">Work notes: </span><t t-esc="doc.treatment_summary"/>
+                        </div>
+                        <t t-call="aabaan_service_reports.svc_signatures"/>
+                    </div>
+                </div>
+                <t t-call="aabaan_service_reports.svc_letterhead_footer"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- ══ 3. Anti-Termite Warranty Certificate ══ -->
+    <template id="report_termite_warranty">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="guard" t-value="doc.aabaan_certificate_guard('termite')"/>
+                <t t-set="company" t-value="doc.company_id.sudo() or doc.env.company.sudo()"/>
+                <t t-set="vals" t-value="doc.aabaan_doc_vals()"/>
+                <t t-set="doc_title" t-value="'Warranty Certificate'"/>
+                <t t-call="aabaan_service_reports.svc_letterhead_header"/>
+                <div class="article" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
+                    <div style="font-family: Helvetica, Arial, sans-serif; color: #1A1A1C; font-size: 10px; line-height: 1.6;">
+                        <t t-call="aabaan_service_reports.svc_ref_table"/>
+                        <div style="margin-top: 22px; text-align: center; font-size: 15px; font-weight: bold; letter-spacing: 1px;">
+                            ANTI-TERMITE TREATMENT — WARRANTY CERTIFICATE
+                        </div>
+                        <div style="width: 90px; height: 3px; background-color: #EF7D25; margin: 8px auto 18px;"/>
+                        <div style="font-size: 10.5px;">
+                            This is to certify that <span style="font-weight: bold;" t-esc="company.name"/>
+                            has completed the anti-termite treatment at the premises of
+                            <span style="font-weight: bold;" t-esc="doc.partner_id.name or doc.sale_order_id.partner_id.name"/>
+                            on <span style="font-weight: bold;" t-esc="vals['completed_date']"/>,
+                            using municipality-approved chemicals and methods.
+                        </div>
+                        <div style="margin-top: 12px; font-size: 10.5px;">
+                            The treated areas carry a
+                            <span style="font-weight: bold; color: #EF7D25;">ten (10) year warranty</span>,
+                            valid until <span style="font-weight: bold;" t-esc="vals['warranty_until']"/>.
+                            Should termite activity reappear in the treated areas within the warranty
+                            period, <span t-esc="company.name"/> will re-treat the affected areas
+                            <span style="font-weight: bold;">free of charge</span>, as per the signed agreement.
+                        </div>
+                        <div t-if="doc.treatment_summary" style="margin-top: 12px; font-size: 9px; color: #58585E; white-space: pre-line;">
+                            <span style="font-weight: bold; color: #1A1A1C;">Work notes: </span><t t-esc="doc.treatment_summary"/>
+                        </div>
+                        <t t-call="aabaan_service_reports.svc_signatures"/>
+                    </div>
+                </div>
+                <t t-call="aabaan_service_reports.svc_letterhead_footer"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- Print-menu bindings on the visit -->
+    <record id="action_report_visit_service" model="ir.actions.report">
+        <field name="name">Service Report</field>
+        <field name="model">project.task</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aabaan_service_reports.report_visit_service</field>
+        <field name="report_file">aabaan_service_reports.report_visit_service</field>
+        <field name="paperformat_id" ref="aabaan_quotation_report.paperformat_aabaan_quotation"/>
+        <field name="binding_model_id" ref="project.model_project_task"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Service Report - %s' % (object.name or '')</field>
+    </record>
+    <record id="action_report_tank_certificate" model="ir.actions.report">
+        <field name="name">Water-Tank Cleaning Certificate</field>
+        <field name="model">project.task</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aabaan_service_reports.report_tank_certificate</field>
+        <field name="report_file">aabaan_service_reports.report_tank_certificate</field>
+        <field name="paperformat_id" ref="aabaan_quotation_report.paperformat_aabaan_quotation"/>
+        <field name="binding_model_id" ref="project.model_project_task"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Cleaning Certificate - %s' % (object.name or '')</field>
+    </record>
+    <record id="action_report_termite_warranty" model="ir.actions.report">
+        <field name="name">Anti-Termite Warranty Certificate</field>
+        <field name="model">project.task</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aabaan_service_reports.report_termite_warranty</field>
+        <field name="report_file">aabaan_service_reports.report_termite_warranty</field>
+        <field name="paperformat_id" ref="aabaan_quotation_report.paperformat_aabaan_quotation"/>
+        <field name="binding_model_id" ref="project.model_project_task"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Warranty Certificate - %s' % (object.name or '')</field>
+    </record>
+</odoo>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The Planning Gantt from the approved UI reference, standard-first:
+         drag-to-reassign, drag-to-reschedule, the Unassigned row, day/week/
+         month scales and the per-technician workload bar are ALL native
+         Enterprise Gantt behaviour — this view only tunes it for visits.
+         No x_* field is referenced (Rule 2: those live in the database,
+         and a static view naming one would fail to install without it). -->
+    <record id="view_task_gantt_planning" model="ir.ui.view">
+        <field name="name">project.task.gantt.aabaan.planning</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <gantt date_start="planned_date_begin" date_stop="date_deadline"
+                   default_scale="week" scales="day,week,month"
+                   default_group_by="user_ids"
+                   color="project_id"
+                   progress_bar="user_ids"
+                   display_unavailability="1"
+                   decoration-danger="sla_escalated"
+                   sample="1">
+                <field name="partner_id"/>
+                <field name="sale_order_id"/>
+                <field name="visit_started_at"/>
+                <field name="sla_escalated"/>
+            </gantt>
+        </field>
+    </record>
+
+    <record id="view_task_search_planning" model="ir.ui.view">
+        <field name="name">project.task.search.aabaan.planning</field>
+        <field name="model">project.task</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="user_ids"/>
+                <field name="sale_order_id"/>
+                <filter name="filter_open" string="Open"
+                        domain="[('stage_id.fold', '=', False)]"/>
+                <filter name="filter_unassigned" string="Unassigned"
+                        domain="[('user_ids', '=', False)]"/>
+                <filter name="filter_escalated" string="SLA Escalated"
+                        domain="[('sla_escalated', '=', True)]"/>
+                <filter name="filter_not_started" string="Not Started"
+                        domain="[('visit_started_at', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_planning_board" model="ir.actions.act_window">
+        <field name="name">Planning Board</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">gantt,kanban,list,form</field>
+        <field name="view_id" ref="view_task_gantt_planning"/>
+        <field name="search_view_id" ref="view_task_search_planning"/>
+        <field name="domain">[('project_id.is_fsm', '=', True)]</field>
+        <field name="context">{'search_default_filter_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing planned yet</p>
+            <p>Every scheduled visit appears here on its technician's row —
+               drag to reschedule, drag between rows to reassign. The bar on
+               each technician shows their workload for the visible period.
+               Red visits are SLA-escalated. Visits with no planned date
+               don't appear on a timeline — find those under To Schedule.</p>
+        </field>
+    </record>
+
+    <!-- A Gantt can only show what has a date. This is the honest lane for
+         everything that doesn't — the dispatcher's to-do, not a hidden gap. -->
+    <record id="action_to_schedule" model="ir.actions.act_window">
+        <field name="name">To Schedule</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="search_view_id" ref="view_task_search_planning"/>
+        <field name="domain">[('project_id.is_fsm', '=', True),
+                              ('stage_id.fold', '=', False),
+                              ('planned_date_begin', '=', False)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Everything is scheduled</p>
+            <p>Visits without a planned date land here. Set the date (or open
+               the visit and plan it) and they move onto the Planning Board.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_planning_board" name="Planning Board"
+              parent="industry_fsm.fsm_menu_root"
+              action="aabaan_field_ops.action_planning_board" sequence="3"/>
+    <menuitem id="menu_to_schedule" name="To Schedule"
+              parent="industry_fsm.fsm_menu_root"
+              action="aabaan_field_ops.action_to_schedule" sequence="6"/>
+</odoo>
