@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Sales › Contracts — the daily-work section -->
+    <menuitem id="menu_sale_contracts_section" name="Contracts"
+              parent="sale.sale_menu_root" sequence="6"/>
+
+    <record id="aabaan_contract_cockpit.menu_contract_register" model="ir.ui.menu">
+        <field name="name">Contract Register</field>
+        <field name="parent_id" ref="menu_sale_contracts_section"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="aabaan_templates_library.menu_templates_library" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_sale_contracts_section"/>
+        <field name="sequence">5</field>
+    </record>
+
+    <!-- Sales › Aabaan Setup — configuration, out of the daily path -->
+    <menuitem id="menu_sale_aabaan_setup" name="Aabaan Setup"
+              parent="sale.sale_menu_root" sequence="80"/>
+
+    <record id="aabaan_service_contracts.menu_service_tags" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_sale_aabaan_setup"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="aabaan_pricing_guard.menu_zero_price_products" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_sale_aabaan_setup"/>
+        <field name="sequence">5</field>
+    </record>
+</odoo>

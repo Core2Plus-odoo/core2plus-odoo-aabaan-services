@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_cockpit" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.cockpit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_visits" type="object"
+                        class="oe_stat_button" icon="fa-calendar"
+                        invisible="state != 'sale'">
+                    <field name="cockpit_visits_total" widget="statinfo"
+                           string="Visits"/>
+                </button>
+            </xpath>
+            <xpath expr="//page[@name='other_information']" position="after">
+                <page string="Contract Cockpit" name="aabaan_cockpit"
+                      invisible="state != 'sale'">
+                    <group>
+                        <group string="Term and Renewal" name="ck_term">
+                            <field name="cockpit_renewal_state"/>
+                            <field name="cockpit_days_to_end"/>
+                        </group>
+                        <group string="Health" name="ck_health">
+                            <field name="cockpit_health"/>
+                            <field name="cockpit_health_note"/>
+                        </group>
+                        <group string="Delivery" name="ck_delivery">
+                            <field name="cockpit_visits_total"/>
+                            <field name="cockpit_visits_done"/>
+                            <field name="cockpit_visits_overdue"/>
+                            <field name="cockpit_sla_escalations"/>
+                        </group>
+                        <group string="Money" name="ck_money">
+                            <field name="cockpit_invoiced"/>
+                            <field name="cockpit_paid"/>
+                            <field name="cockpit_outstanding"/>
+                        </group>
+                        <group string="Agreement" name="ck_agreement">
+                            <field name="cockpit_services"/>
+                            <field name="cockpit_agreement_on_file"/>
+                        </group>
+                        <group string="Call-out Entitlement" name="ck_entitlement">
+                            <field name="cockpit_unscheduled_used"/>
+                            <field name="cockpit_unscheduled_over"/>
+                            <field name="cockpit_entitlement_note"/>
+                        </group>
+                    </group>
+                </page>
+                <page string="Invoices" name="aabaan_invoices"
+                      invisible="state != 'sale'">
+                    <field name="invoice_status" invisible="1"/>
+                    <group>
+                        <group string="Billing Position" name="ck_inv_totals">
+                            <field name="cockpit_invoiced"/>
+                            <field name="cockpit_paid"/>
+                            <field name="cockpit_outstanding"/>
+                        </group>
+                        <group string="Bill More" name="ck_inv_actions">
+                            <div class="o_td_label" colspan="2">
+                                <button name="%(sale.action_view_sale_advance_payment_inv)d"
+                                        type="action" string="Create Invoice"
+                                        class="btn btn-primary"
+                                        invisible="invoice_status != 'to invoice'"/>
+                                <div class="text-muted" invisible="invoice_status == 'to invoice'">
+                                    Nothing left to invoice on this order right now.
+                                    For recurring AMC billing, set a Recurring Plan on the
+                                    order (Subscriptions) so this same order re-invoices
+                                    every period.
+                                </div>
+                            </div>
+                        </group>
+                    </group>
+                    <field name="invoice_ids" readonly="1">
+                        <list decoration-danger="payment_state == 'not_paid'"
+                              decoration-success="payment_state in ('paid', 'in_payment')">
+                            <field name="name"/>
+                            <field name="invoice_date"/>
+                            <field name="invoice_date_due" optional="show"/>
+                            <field name="amount_total" sum="Total"/>
+                            <field name="amount_residual" sum="Due"/>
+                            <field name="payment_state" widget="badge"
+                                   decoration-success="payment_state in ('paid', 'in_payment')"
+                                   decoration-danger="payment_state == 'not_paid'"
+                                   decoration-warning="payment_state == 'partial'"/>
+                            <field name="state" optional="show"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_list_cockpit" model="ir.ui.view">
+        <field name="name">sale.order.list.aabaan.cockpit</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-danger="cockpit_unscheduled_over &gt; 0">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="cockpit_services" optional="show"/>
+                <field name="cockpit_agreement_on_file" optional="hide"/>
+                <field name="cockpit_unscheduled_over" optional="show"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="cockpit_invoiced"/>
+                <field name="cockpit_outstanding"/>
+                <field name="cockpit_visits_done"/>
+                <field name="cockpit_visits_overdue"/>
+                <field name="cockpit_days_to_end"/>
+                <field name="cockpit_health"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_contract_register" model="ir.actions.act_window">
+        <field name="name">Contracts</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_order_list_cockpit"/>
+        <field name="domain">[('state', '=', 'sale')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No confirmed contracts yet</p>
+            <p>Every confirmed contract appears here with its delivery, money,
+               renewal countdown and health score. Open one and see the
+               Contract Cockpit tab for the full view.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_contract_register" name="Contracts"
+              parent="sale.sale_menu_root"
+              action="aabaan_contract_cockpit.action_contract_register"
+              sequence="6"/>
+</odoo>

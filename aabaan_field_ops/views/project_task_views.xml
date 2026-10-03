@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_form_field_ops" model="ir.ui.view">
+        <field name="name">project.task.form.aabaan.field.ops</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="visit_started_at" invisible="1"/>
+                <field name="visit_completed_at" invisible="1"/>
+                <button name="action_start_visit" type="object" string="Start Visit"
+                        class="btn-primary"
+                        invisible="not sale_order_id or visit_started_at"
+                        help="Checks the technician in and moves the visit to In Progress. Requires an assignee."/>
+                <button name="action_complete_visit" type="object" string="Complete Visit"
+                        class="btn-primary"
+                        invisible="not visit_started_at or visit_completed_at"
+                        help="Checks out, records the field report, and raises the follow-up automatically if infestation was found."/>
+                <button name="action_cancel_visit" type="object" string="Cancel Visit"
+                        invisible="not sale_order_id or visit_completed_at"
+                        help="Requires a cancellation reason on the Field Report tab."/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Field Report" name="aabaan_field_report"
+                      invisible="not sale_order_id">
+                    <group>
+                        <group name="findings" string="Findings">
+                            <field name="infestation_found"/>
+                            <field name="treatment_summary"/>
+                            <field name="chemicals_used"/>
+                            <field name="followup_task_id"/>
+                        </group>
+                        <group name="times" string="Times">
+                            <field name="visit_started_at"/>
+                            <field name="visit_completed_at"/>
+                            <field name="visit_duration_actual"/>
+                            <field name="sla_escalated" readonly="1"/>
+                            <field name="visit_cancel_reason"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_search_field_ops" model="ir.ui.view">
+        <field name="name">project.task.search.aabaan.field.ops</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_search_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="filter_aabaan_today" string="Today's Visits"
+                        domain="[('visit_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_aabaan_unassigned" string="Unassigned"
+                        domain="[('user_ids', '=', False)]"/>
+                <filter name="filter_aabaan_not_started" string="Not Started"
+                        domain="[('visit_started_at', '=', False)]"/>
+                <filter name="filter_aabaan_escalated" string="Escalated (SLA / overdue)"
+                        domain="[('sla_escalated', '=', True)]"/>
+                <filter name="group_aabaan_technician" string="Technician"
+                        context="{'group_by': 'user_ids'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_dispatch_board" model="ir.actions.act_window">
+        <field name="name">Dispatch Board</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,calendar,form</field>
+        <field name="domain">[('project_id.is_fsm', '=', True), ('stage_id.fold', '=', False)]</field>
+        <field name="context">{'search_default_group_aabaan_technician': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Nothing to dispatch</p>
+            <p>Open visits appear here grouped by technician — drag to reassign,
+               and use the Unassigned filter to catch visits without an owner.</p>
+        </field>
+    </record>
+
+    <record id="action_todays_visits" model="ir.actions.act_window">
+        <field name="name">Today's Visits</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('project_id.is_fsm', '=', True)]</field>
+        <field name="context">{'search_default_filter_aabaan_today': 1, 'search_default_group_aabaan_technician': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No visits today</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_todays_visits" name="Today's Visits"
+              parent="industry_fsm.fsm_menu_root"
+              action="aabaan_field_ops.action_todays_visits" sequence="4"/>
+    <!-- Cleanup audit: the Dispatch Board menu was retired - the Planning
+         Board's kanban mode is the same by-technician view of the same
+         records, and two menus for one job is how users end up split
+         across screens. The action above is kept for saved bookmarks;
+         restoring the menu is one menuitem away if ever missed. -->
+</odoo>

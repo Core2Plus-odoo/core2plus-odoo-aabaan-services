@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Letterhead paper format: tall margins reserve space for the angular
+         header band and the offices footer on every page. -->
+    <record id="paperformat_aabaan_quotation" model="report.paperformat">
+        <field name="name">Aabaan Letterhead A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">38</field>
+        <field name="margin_bottom">42</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">32</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <template id="report_saleorder_document_aabaan">
+        <t t-set="company" t-value="doc.company_id.sudo()"/>
+        <t t-set="is_quote" t-value="doc.state in ('draft', 'sent')"/>
+        <t t-set="has_discount" t-value="any(l.discount for l in doc.order_line if not l.display_type)"/>
+
+        <!-- The shared Aaban letterhead (aabaan_letterhead) — this file was
+             the canonical source, so the swap is byte-for-byte. -->
+        <t t-call="aabaan_letterhead.header"/>
+
+        <!-- Document body -->
+        <div class="article">
+            <style>
+                .ab-plain { border: none !important; border-collapse: collapse; }
+                .ab-plain td { border: none !important; }
+                .ab-note p { margin: 4px 0; orphans: 3; widows: 3; }
+                .ab-note table { page-break-inside: avoid; }
+            </style>
+            <div style="font-family: Helvetica, Arial, sans-serif; color: #1A1A1C; font-size: 10px; line-height: 1.4;">
+
+                <!-- Customer name + title / ref block -->
+                <table class="ab-plain" style="width: 100%;">
+                    <tr>
+                        <td style="vertical-align: top; padding-top: 8px;">
+                            <div style="font-size: 12px; font-weight: bold; text-transform: uppercase;"
+                                 t-esc="doc.partner_id.name"/>
+                            <div style="font-size: 9px; color: #58585E; margin-top: 2px;"
+                                 t-field="doc.partner_id"
+                                 t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                            <div t-if="doc.partner_id.vat" style="font-size: 9px; color: #58585E;">
+                                TRN: <span t-esc="doc.partner_id.vat"/>
+                            </div>
+                        </td>
+                        <td style="width: 250px; vertical-align: top; text-align: right;">
+                            <div style="font-size: 17px; font-weight: bold;">
+                                <t t-if="is_quote">Quotation</t>
+                                <t t-else="">Contract</t>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 5px;">
+                                <tr>
+                                    <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; border: none; padding: 4px 7px; text-align: left;">Ref#</td>
+                                    <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; border: none; padding: 4px 7px; text-align: right;"
+                                        t-esc="doc.name"/>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: left;">Date</td>
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: right; font-weight: bold;">
+                                        <t t-if="doc.date_order" t-esc="doc.date_order.strftime('%d-%b-%Y')"/>
+                                    </td>
+                                </tr>
+                                <tr t-if="is_quote and doc.validity_date">
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: left;">Valid Until</td>
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: right; font-weight: bold;"
+                                        t-esc="doc.validity_date.strftime('%d-%b-%Y')"/>
+                                </tr>
+                                <tr t-if="doc.client_order_ref">
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: left;">LPO / Ref</td>
+                                    <td style="padding: 4px 7px; border: none; border-bottom: 1px solid #ECECEE; text-align: right; font-weight: bold;"
+                                        t-esc="doc.client_order_ref"/>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Subject -->
+                <div t-if="doc._aabaan_subject()" style="margin-top: 12px;">
+                    <span style="font-weight: bold;">Subject : </span>
+                    <span style="font-style: italic; font-weight: bold;" t-esc="doc._aabaan_subject()"/>
+                </div>
+
+                <!-- First / Second Party intro -->
+                <div style="margin-top: 8px;">
+                    The First Party <span style="font-weight: bold;" t-esc="company.name"/>
+                    and The Second Party <span style="font-weight: bold;" t-esc="doc.partner_id.name"/>
+                    have agreed to the services listed herein on the following terms and conditions:
+                </div>
+
+                <!-- Contract articles: the order's terms, carried by the
+                     quotation templates from the signed agreements; cleaned
+                     for print (placeholder chips become underlined blanks) -->
+                <div t-if="doc.note" t-out="doc._aabaan_note_html()" class="ab-note"
+                     style="margin-top: 10px; font-size: 9.5px; line-height: 1.45;"/>
+
+                <!-- Line items -->
+                <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 14px;">
+                    <thead>
+                        <tr style="background-color: #EF7D25; color: #ffffff; font-weight: bold;">
+                            <td style="width: 26px; border: none; padding: 6px 4px; text-align: center;">&#160;</td>
+                            <td style="border: none; padding: 6px; text-align: center;">Description</td>
+                            <td style="width: 52px; border: none; padding: 6px; text-align: center;">Unit</td>
+                            <td style="width: 80px; border: none; padding: 6px; text-align: center;">Rate</td>
+                            <td t-if="has_discount" style="width: 52px; border: none; padding: 6px; text-align: center;">Disc.%</td>
+                            <td style="width: 95px; border: none; padding: 6px; text-align: center;">Grand Total</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc._aabaan_numbered_lines()" t-as="row">
+                            <t t-set="line" t-value="row['line']"/>
+                            <tr t-if="line.display_type == 'line_section'">
+                                <td t-att-colspan="6 if has_discount else 5"
+                                    style="background-color: #F4F4F5; font-weight: bold; padding: 5px 7px; border: 1px solid #D9D9D9;"
+                                    t-esc="line.name"/>
+                            </tr>
+                            <tr t-elif="line.display_type == 'line_note'">
+                                <td t-att-colspan="6 if has_discount else 5"
+                                    style="font-style: italic; color: #58585E; padding: 4px 7px; border: 1px solid #D9D9D9;">
+                                    <span t-field="line.name"/>
+                                </td>
+                            </tr>
+                            <tr t-else="">
+                                <td style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="row['no']"/>
+                                <td style="padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;">
+                                    <span style="white-space: pre-line;" t-esc="doc._aabaan_line_desc(line)"/>
+                                </td>
+                                <td style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="'%g' % line.product_uom_qty"/>
+                                <td style="text-align: right; padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-out="line.price_unit"
+                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                <td t-if="has_discount"
+                                    style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="'%g' % line.discount"/>
+                                <td style="text-align: right; padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-out="line.price_subtotal"
+                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Totals -->
+                <table style="width: 42%; margin-left: 58%; border-collapse: collapse; font-size: 9.5px; margin-top: 8px; page-break-inside: avoid;">
+                    <tr>
+                        <td style="padding: 3px 7px; border: none; text-align: left;">Subtotal (excl. VAT)</td>
+                        <td style="padding: 3px 7px; border: none; text-align: right;"
+                            t-out="doc.amount_untaxed"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr>
+                        <td style="padding: 3px 7px; border: none; text-align: left;">VAT</td>
+                        <td style="padding: 3px 7px; border: none; text-align: right;"
+                            t-out="doc.amount_tax"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr style="font-weight: bold; font-size: 10.5px;">
+                        <td style="padding: 4px 7px; text-align: left; border: none; border-top: 2px solid #EF7D25;">Grand Total</td>
+                        <td style="padding: 4px 7px; text-align: right; border: none; border-top: 2px solid #EF7D25; color: #EF7D25;"
+                            t-out="doc.amount_total"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                </table>
+
+                <div style="font-weight: bold; font-style: italic; margin-top: 8px; clear: both;">
+                    Total Amount
+                    <t t-out="doc.amount_total"
+                       t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    <t t-if="doc._aabaan_amount_in_words()">
+                        (<t t-esc="doc._aabaan_amount_in_words()"/> Only)
+                    </t>
+                </div>
+
+                <!-- Signatures -->
+                <table class="ab-plain" style="width: 100%; margin-top: 36px; page-break-inside: avoid; font-size: 9.5px;">
+                    <tr>
+                        <td style="width: 46%; vertical-align: bottom;">
+                            <div style="font-size: 8px; color: #9A9AA0; text-transform: uppercase; letter-spacing: 1px;">For the Second Party</div>
+                            <div style="font-weight: bold;" t-esc="doc.partner_id.name"/>
+                            <div style="height: 54px; margin-top: 6px;">
+                                <img t-if="doc.signature" t-att-src="image_data_uri(doc.signature)"
+                                     style="max-height: 50px;" alt="Signature"/>
+                            </div>
+                            <div style="border-top: 1px solid #1A1A1C; width: 75%;"/>
+                            <div style="font-size: 8.5px; font-weight: bold; margin-top: 2px;">Signature</div>
+                            <div t-if="doc.signed_by" style="font-size: 8.5px;">
+                                Name: <t t-esc="doc.signed_by"/>
+                                <t t-if="doc.signed_on"> — <t t-esc="doc.signed_on.strftime('%d-%b-%Y')"/></t>
+                            </div>
+                        </td>
+                        <td style="width: 8%;"/>
+                        <td style="width: 46%; vertical-align: bottom;">
+                            <div style="font-size: 8px; color: #9A9AA0; text-transform: uppercase; letter-spacing: 1px;">For the First Party</div>
+                            <div style="font-weight: bold;">M/s. <t t-esc="company.name"/></div>
+                            <div style="height: 54px; margin-top: 6px;"/>
+                            <div style="border-top: 1px solid #1A1A1C; width: 75%;"/>
+                            <div style="font-size: 8.5px; font-weight: bold; margin-top: 2px;">Signature</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <t t-call="aabaan_letterhead.footer"/>
+    </template>
+
+    <template id="report_saleorder_aabaan">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang or doc.env.lang)"/>
+                <t t-call="aabaan_quotation_report.report_saleorder_document_aabaan"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- Redirect the default Quotation / Order PDF (print, email, portal) to
+         the letterhead layout. Revert by pointing report_name back to
+         sale.report_saleorder. -->
+    <record id="sale.action_report_saleorder" model="ir.actions.report">
+        <field name="report_name">aabaan_quotation_report.report_saleorder_aabaan</field>
+        <field name="report_file">aabaan_quotation_report.report_saleorder_aabaan</field>
+        <field name="paperformat_id" ref="aabaan_quotation_report.paperformat_aabaan_quotation"/>
+    </record>
+
+</odoo>

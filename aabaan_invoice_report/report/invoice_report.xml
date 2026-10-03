@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Letterhead paper format: tall margins reserve space for the angular
+         header band and the offices footer on every page. -->
+    <record id="paperformat_aabaan_invoice" model="report.paperformat">
+        <field name="name">Aabaan Tax Invoice A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">38</field>
+        <field name="margin_bottom">42</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">32</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <template id="report_invoice_document_aabaan">
+        <t t-set="_guard" t-value="doc.aabaan_tax_invoice_guard()"/>
+        <t t-set="company" t-value="doc.company_id.sudo()"/>
+        <t t-set="has_discount" t-value="any(l.discount for l in doc.invoice_line_ids if not l.display_type)"/>
+        <t t-set="tax_lines" t-value="doc._aabaan_tax_lines()"/>
+
+        <!-- The shared Aaban letterhead (aabaan_letterhead). -->
+        <t t-call="aabaan_letterhead.header"/>
+
+        <!-- Document body -->
+        <div class="article">
+            <style>
+                .ab-plain { border: none !important; border-collapse: collapse; }
+                .ab-plain td { border: none !important; }
+            </style>
+            <div style="font-family: Helvetica, Arial, sans-serif; color: #1A1A1C; font-size: 10px; line-height: 1.4;">
+
+                <div style="text-align: center; margin-top: 4px;">
+                    <span style="display: inline-block; border: 2px solid #EF7D25; color: #EF7D25; font-weight: bold; font-size: 14px; letter-spacing: 1px; padding: 4px 18px; text-transform: uppercase;"
+                          t-esc="doc._aabaan_document_title()"/>
+                </div>
+
+                <!-- Supplier / recipient -->
+                <table class="ab-plain" style="width: 100%; margin-top: 12px;">
+                    <tr>
+                        <td style="width: 50%; vertical-align: top;">
+                            <div style="font-size: 8px; color: #9A9AA0; text-transform: uppercase; letter-spacing: 1px;">From</div>
+                            <div style="font-size: 11px; font-weight: bold; text-transform: uppercase;" t-esc="company.name"/>
+                            <div style="font-size: 9px; color: #58585E; margin-top: 2px;"
+                                 t-field="company.partner_id"
+                                 t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                            <div t-if="company.vat" style="font-size: 9px; color: #58585E;">
+                                TRN: <span t-esc="company.vat"/>
+                            </div>
+                            <div t-if="company.company_registry" style="font-size: 9px; color: #58585E;">
+                                Trade Licence: <span t-esc="company.company_registry"/>
+                            </div>
+                        </td>
+                        <td style="width: 50%; vertical-align: top; padding-left: 14px;">
+                            <div style="font-size: 8px; color: #9A9AA0; text-transform: uppercase; letter-spacing: 1px;">Bill To</div>
+                            <div style="font-size: 11px; font-weight: bold; text-transform: uppercase;" t-esc="doc.partner_id.name"/>
+                            <div style="font-size: 9px; color: #58585E; margin-top: 2px;"
+                                 t-field="doc.partner_id"
+                                 t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                            <div t-if="doc.partner_id.vat" style="font-size: 9px; color: #58585E;">
+                                TRN: <span t-esc="doc.partner_id.vat"/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Document info -->
+                <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 12px;">
+                    <tr>
+                        <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; padding: 4px 7px; text-align: left; width: 25%;">Invoice No.</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold; width: 25%;" t-esc="doc.name"/>
+                        <td style="background-color: #FDEBDC; color: #EF7D25; font-weight: bold; padding: 4px 7px; text-align: left; width: 25%;">Invoice Date</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold; width: 25%;">
+                            <t t-if="doc.invoice_date" t-esc="doc.invoice_date.strftime('%d-%b-%Y')"/>
+                        </td>
+                    </tr>
+                    <tr t-if="'delivery_date' in doc._fields and doc.delivery_date and doc.delivery_date != doc.invoice_date">
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Date of Supply</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold;"
+                            t-esc="doc.delivery_date.strftime('%d-%b-%Y')"/>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Payment Due</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold;">
+                            <t t-if="doc.invoice_date_due" t-esc="doc.invoice_date_due.strftime('%d-%b-%Y')"/>
+                        </td>
+                    </tr>
+                    <tr t-else="">
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Payment Due</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold;">
+                            <t t-if="doc.invoice_date_due" t-esc="doc.invoice_date_due.strftime('%d-%b-%Y')"/>
+                        </td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">LPO / Ref</td>
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold;"
+                            t-esc="doc.invoice_origin or doc.ref or ''"/>
+                    </tr>
+                    <tr t-if="'aabaan_order_id' in doc._fields and doc.aabaan_order_id">
+                        <td style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left;">Contract</td>
+                        <td colspan="3" style="padding: 4px 7px; border-bottom: 1px solid #ECECEE; text-align: left; font-weight: bold;"
+                            t-esc="doc.aabaan_order_id.name"/>
+                    </tr>
+                </table>
+
+                <div t-if="doc._aabaan_reverse_charge()" style="margin-top: 8px; font-size: 8.5px; font-style: italic; color: #58585E;">
+                    This supply is subject to the reverse charge mechanism — the recipient is required to account for VAT on this invoice.
+                </div>
+
+                <!-- Line items -->
+                <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; margin-top: 14px;">
+                    <thead>
+                        <tr style="background-color: #EF7D25; color: #ffffff; font-weight: bold;">
+                            <td style="width: 26px; border: none; padding: 6px 4px; text-align: center;">&#160;</td>
+                            <td style="border: none; padding: 6px; text-align: center;">Description</td>
+                            <td style="width: 38px; border: none; padding: 6px; text-align: center;">Qty</td>
+                            <td style="width: 72px; border: none; padding: 6px; text-align: center;">Unit Price</td>
+                            <td t-if="has_discount" style="width: 46px; border: none; padding: 6px; text-align: center;">Disc.%</td>
+                            <td style="width: 40px; border: none; padding: 6px; text-align: center;">VAT%</td>
+                            <td style="width: 86px; border: none; padding: 6px; text-align: center;">Amount</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="doc._aabaan_numbered_lines()" t-as="row">
+                            <t t-set="line" t-value="row['line']"/>
+                            <tr t-if="line.display_type == 'line_section'">
+                                <td t-att-colspan="7 if has_discount else 6"
+                                    style="background-color: #F4F4F5; font-weight: bold; padding: 5px 7px; border: 1px solid #D9D9D9;"
+                                    t-esc="line.name"/>
+                            </tr>
+                            <tr t-elif="line.display_type == 'line_note'">
+                                <td t-att-colspan="7 if has_discount else 6"
+                                    style="font-style: italic; color: #58585E; padding: 4px 7px; border: 1px solid #D9D9D9;">
+                                    <span t-field="line.name"/>
+                                </td>
+                            </tr>
+                            <tr t-else="">
+                                <td style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="row['no']"/>
+                                <td style="padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;">
+                                    <span style="white-space: pre-line;" t-esc="doc._aabaan_line_desc(line)"/>
+                                </td>
+                                <td style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="'%g' % line.quantity"/>
+                                <td style="text-align: right; padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-out="line.price_unit"
+                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                <td t-if="has_discount"
+                                    style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="'%g' % line.discount"/>
+                                <td style="text-align: center; padding: 5px 4px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-esc="'%g' % (line.tax_ids[:1].amount if line.tax_ids else 0)"/>
+                                <td style="text-align: right; padding: 5px 7px; border: 1px solid #D9D9D9; vertical-align: top;"
+                                    t-out="line.price_subtotal"
+                                    t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Tax breakdown + totals -->
+                <table style="width: 52%; margin-left: 48%; border-collapse: collapse; font-size: 9.5px; margin-top: 8px; page-break-inside: avoid;">
+                    <tr>
+                        <td style="padding: 3px 7px; border: none; text-align: left;">Subtotal (excl. VAT)</td>
+                        <td style="padding: 3px 7px; border: none; text-align: right;"
+                            t-out="doc.amount_untaxed"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr t-foreach="tax_lines" t-as="tl">
+                        <td style="padding: 3px 7px; border: none; text-align: left;">
+                            <span t-esc="tl['name']"/> (<span t-esc="'%g' % tl['rate']"/>%)
+                        </td>
+                        <td style="padding: 3px 7px; border: none; text-align: right;"
+                            t-out="tl['amount']"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr t-if="not tax_lines">
+                        <td style="padding: 3px 7px; border: none; text-align: left;">VAT</td>
+                        <td style="padding: 3px 7px; border: none; text-align: right;"
+                            t-out="doc.amount_tax"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr style="font-weight: bold; font-size: 10.5px;">
+                        <td style="padding: 4px 7px; text-align: left; border: none; border-top: 2px solid #EF7D25;">Grand Total</td>
+                        <td style="padding: 4px 7px; text-align: right; border: none; border-top: 2px solid #EF7D25; color: #EF7D25;"
+                            t-out="doc.amount_total"
+                            t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    </tr>
+                    <tr t-if="'invoice_currency_rate' in doc._fields and doc.currency_id != doc.company_id.currency_id">
+                        <td style="padding: 3px 7px; border: none; text-align: left; font-size: 8px; color: #58585E;">Exchange rate</td>
+                        <td style="padding: 3px 7px; border: none; text-align: right; font-size: 8px; color: #58585E;">
+                            1 <span t-esc="doc.company_id.currency_id.name"/> =
+                            <span t-esc="'%.4f' % doc.invoice_currency_rate"/> <span t-esc="doc.currency_id.name"/>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="font-weight: bold; font-style: italic; margin-top: 8px; clear: both;">
+                    Total Amount
+                    <t t-out="doc.amount_total"
+                       t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                    <t t-if="doc._aabaan_amount_in_words()">
+                        (<t t-esc="doc._aabaan_amount_in_words()"/> Only)
+                    </t>
+                </div>
+
+                <!-- Payment details: only shown if the issuing company has a
+                     real bank account on file — never invented. -->
+                <table class="ab-plain" style="width: 100%; margin-top: 20px; page-break-inside: avoid;" t-if="company.bank_ids">
+                    <tr>
+                        <td style="font-size: 8px; color: #9A9AA0; text-transform: uppercase; letter-spacing: 1px;">Payment Details</td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 9px; padding-top: 2px;">
+                            <t t-set="bank" t-value="company.bank_ids[0]"/>
+                            <span t-if="bank.bank_id" t-esc="bank.bank_id.name"/>
+                            <span t-if="bank.acc_number"> · Account: <t t-esc="bank.acc_number"/></span>
+                            <span t-if="bank.acc_holder_name"> · <t t-esc="bank.acc_holder_name"/></span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <t t-call="aabaan_letterhead.footer"/>
+    </template>
+
+    <template id="report_invoice_aabaan">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang or doc.env.lang)"/>
+                <t t-call="aabaan_invoice_report.report_invoice_document_aabaan"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- New Print-menu action, bound to account.move — does not touch or
+         override the native invoice print action. -->
+    <record id="action_report_invoice_aabaan" model="ir.actions.report">
+        <field name="name">Tax Invoice (Aaban)</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aabaan_invoice_report.report_invoice_aabaan</field>
+        <field name="report_file">aabaan_invoice_report.report_invoice_aabaan</field>
+        <field name="print_report_name">'Tax Invoice - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_aabaan_invoice"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Area on the contact form (after street2 in the address block) and a
+         Locations smart button opening the client's site contacts. -->
+    <record id="view_partner_form_sites" model="ir.ui.view">
+        <field name="name">res.partner.form.aabaan.sites</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='street2']" position="after">
+                <field name="aabaan_area" placeholder="Area / District"/>
+            </xpath>
+            <!-- The child-address popup (Contacts tab) uses its own embedded
+                 form — the area must be there too, it's where sites are made. -->
+            <xpath expr="//field[@name='child_ids']/form//field[@name='street2']"
+                   position="after">
+                <field name="aabaan_area" placeholder="Area / District"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_locations" type="object"
+                        class="oe_stat_button" icon="fa-map-marker"
+                        invisible="not is_company">
+                    <field name="aabaan_location_count" widget="statinfo"
+                           string="Locations"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_list_sites" model="ir.ui.view">
+        <field name="name">res.partner.list.aabaan.sites</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='city']" position="after">
+                <field name="aabaan_area" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Area on the visit and a one-click route grouping on the boards. -->
+    <record id="view_task_form_sites" model="ir.ui.view">
+        <field name="name">project.task.form.aabaan.sites</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="aabaan_area"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_task_search_sites" model="ir.ui.view">
+        <field name="name">project.task.search.aabaan.sites</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="aabaan_field_ops.view_task_search_field_ops"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='group_aabaan_technician']" position="after">
+                <filter name="group_aabaan_area" string="Area / District"
+                        context="{'group_by': 'aabaan_area'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Site area on the Contract Cockpit's Agreement group. -->
+    <record id="view_order_form_sites" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.sites</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="aabaan_contract_cockpit.view_order_form_cockpit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='ck_agreement']" position="inside">
+                <field name="aabaan_site_area"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

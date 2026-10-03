@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Order lines: the two guard fields, hidden until needed. -->
+    <record id="view_order_form_pricing_guard" model="ir.ui.view">
+        <field name="name">sale.order.form.aabaan.pricing.guard</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- Anchored on product_id: it is the one field in this
+                 embedded list proven present in Odoo 19's sale.view_order_form
+                 (aabaan_service_contracts already extends it here). -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_id']"
+                   position="after">
+                <field name="aabaan_free_ok" optional="hide"/>
+                <field name="aabaan_free_reason" optional="hide"
+                       readonly="not aabaan_free_ok"
+                       required="aabaan_free_ok"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Zero-priced catalogue review: which AED 0 products exist, and
+         whether anything actually uses them — so the decision to archive
+         is made on evidence rather than assumption. -->
+    <record id="view_product_template_list_zero_price" model="ir.ui.view">
+        <field name="name">product.template.list.aabaan.zero.price</field>
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="aabaan_confirmed_usage &gt; 0"
+                  decoration-muted="aabaan_line_usage == 0">
+                <field name="default_code" optional="show"/>
+                <field name="name"/>
+                <field name="list_price"/>
+                <field name="aabaan_line_usage"/>
+                <field name="aabaan_confirmed_usage"/>
+                <field name="sale_ok" optional="show"/>
+                <field name="active" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_zero_price_products" model="ir.actions.act_window">
+        <field name="name">Zero-Priced Products</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_product_template_list_zero_price"/>
+        <field name="domain">[('list_price', '=', 0.0), ('sale_ok', '=', True)]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No sellable product is priced at AED 0</p>
+            <p>Products listed here would bill nothing if picked on a
+               quotation. Greyed-out rows have never been used and are safe
+               to archive; red rows are already on confirmed orders — fix
+               the price rather than archiving those.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_zero_price_products" name="Zero-Priced Products"
+              parent="sale.sale_menu_root"
+              action="action_zero_price_products" sequence="22"/>
+</odoo>

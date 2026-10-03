@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_payment_voucher_document">
+        <t t-call="web.external_layout">
+            <div class="page" style="font-size: 12px;">
+                <h2 style="margin: 6px 0 2px;">Payment Voucher</h2>
+                <div style="color: #666; margin-bottom: 12px;">
+                    <span t-out="o.name"/> · <span t-out="o.date"/>
+                </div>
+                <table class="table table-sm" style="width: 100%;">
+                    <tr><td style="width: 30%;"><strong>Payee / Vendor</strong></td>
+                        <td t-out="o.partner_id.display_name"/></tr>
+                    <tr><td><strong>Bank / Cash Account</strong></td>
+                        <td t-out="o.journal_id.name"/></tr>
+                    <tr t-if="o.payment_method_line_id"><td><strong>Payment Method</strong></td>
+                        <td t-out="o.payment_method_line_id.name"/></tr>
+                    <tr t-if="o._aabaan_voucher_memo()"><td><strong>Description</strong></td>
+                        <td t-out="o._aabaan_voucher_memo()"/></tr>
+                    <tr><td><strong>Amount</strong></td>
+                        <td><strong t-out="o.amount"
+                            t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td></tr>
+                </table>
+
+                <t t-set="vlines" t-value="o._aabaan_voucher_lines()"/>
+                <table t-if="vlines" class="table table-sm" style="width: 100%; margin-top: 8px;">
+                    <thead><tr style="background: #17171a; color: #fff;">
+                        <th>Settled Document</th><th>Date</th><th>Branch</th>
+                        <th class="text-end">Amount</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr t-foreach="vlines" t-as="vl">
+                            <td t-out="vl['move'].name"/>
+                            <td t-out="vl['move'].invoice_date or vl['move'].date"/>
+                            <td t-out="vl['branches']"/>
+                            <td class="text-end" t-out="vl['move'].amount_total"
+                                t-options='{"widget": "monetary", "display_currency": vl["move"].currency_id}'/>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p t-if="o._aabaan_amount_words()" style="font-style: italic; margin-top: 6px;">
+                    Amount in words: <span t-out="o._aabaan_amount_words()"/> only.
+                </p>
+
+                <table style="width: 100%; margin-top: 44px; page-break-inside: avoid;">
+                    <tr>
+                        <t t-foreach="['Prepared By', 'Checked By', 'Approved By']" t-as="role">
+                            <td style="width: 33%; padding: 0 14px;">
+                                <div style="border-top: 1px solid #17171a; padding-top: 4px;
+                                            font-weight: bold; font-size: 10.5px;"
+                                     t-out="role"/>
+                                <div style="font-size: 10px; color: #666;">Name / Signature / Date</div>
+                            </td>
+                        </t>
+                    </tr>
+                </table>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_payment_voucher">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="aabaan_finance_core.report_payment_voucher_document"
+                   t-lang="o.partner_id.lang"/>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_payment_voucher" model="ir.actions.report">
+        <field name="name">Payment Voucher</field>
+        <field name="model">account.payment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aabaan_finance_core.report_payment_voucher</field>
+        <field name="report_file">aabaan_finance_core.report_payment_voucher</field>
+        <field name="binding_model_id" ref="account.model_account_payment"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Payment Voucher - %s' % (object.name)</field>
+    </record>
+</odoo>

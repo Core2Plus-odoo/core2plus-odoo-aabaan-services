@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fleet_log_services_form_fine" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.form.aabaan.fine</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//group[1]" position="after">
+                <group name="aabaan_fine" string="Fine Accountability &amp; Recovery">
+                    <field name="fine_employee_id"/>
+                    <field name="fine_recovery_state"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="fleet_log_services_search_fine" model="ir.ui.view">
+        <field name="name">fleet.vehicle.log.services.search.aabaan.fine</field>
+        <field name="model">fleet.vehicle.log.services</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_log_services_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="f_fine_pending" string="Fines — Pending Approval"
+                        domain="[('fine_recovery_state', '=', 'pending')]"/>
+                <filter name="f_fine_approved" string="Fines — Approved for Recovery"
+                        domain="[('fine_recovery_state', '=', 'approved')]"/>
+                <filter name="g_fine_employee" string="Responsible Employee"
+                        context="{'group_by': 'fine_employee_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
