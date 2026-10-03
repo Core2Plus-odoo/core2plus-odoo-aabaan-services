@@ -1,6 +1,6 @@
 # Aabaan Odoo build — working rules
 
-Custom Odoo 19 Enterprise addons for Aaban Classic Building Cleaning L.L.C.
+Custom Odoo 20 Enterprise addons for Aaban Classic Building Cleaning L.L.C.
 (`core2plus-odoo-aabaan.odoo.com`, Odoo.sh, deploys from `main`).
 
 ## Rule 1 — Standard-first, always

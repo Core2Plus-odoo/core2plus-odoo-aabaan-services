@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Service Documents',
-    'version': '19.0.1.1.0',
+    'version': '20.0.1.1.0',
     'category': 'Services/Field Service',
     'summary': 'Letterhead service report and certificates printed from the visit',
     'description': """

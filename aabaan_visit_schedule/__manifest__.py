@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Visit Schedule Generator',
-    'version': '19.0.1.4.0',
+    'version': '20.0.1.4.0',
     'category': 'Services/Field Service',
     'summary': 'Generate AMC maintenance visit schedules from confirmed contracts',
     'description': """

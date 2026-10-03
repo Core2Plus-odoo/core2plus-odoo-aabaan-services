@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Field Operations',
-    'version': '19.0.1.2.0',
+    'version': '20.0.1.2.0',
     'category': 'Services/Field Service',
     'summary': 'Guard-railed visit execution: dispatch, start/complete flow, auto follow-ups, SLA escalation',
     'description': """

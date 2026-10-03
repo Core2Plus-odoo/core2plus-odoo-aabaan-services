@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Service Contracts',
-    'version': '19.0.1.3.0',
+    'version': '20.0.1.3.0',
     'category': 'Sales/Sales',
     'summary': 'Multi-site master agreements: per-site SLA lines and a compliance document pack',
     'description': """
@@ -30,7 +30,7 @@ be an invented number.
     'license': 'OPL-1',
     'depends': ['aabaan_contract_cockpit', 'aabaan_client_sites'],
     'data': [
-        'security/ir.model.access.csv',
+        'security/ir.access.csv',
         'data/cron.xml',
         'views/contract_site_views.xml',
         'views/contract_document_views.xml',

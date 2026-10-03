@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Branches',
-    'version': '19.0.3.0.0',
+    'version': '20.0.3.0.0',
     'post_init_hook': '_post_init_hook',
     'category': 'Hidden/Tools',
     'summary': 'The emirates as operating branches of one company, with per-branch licence tracking',

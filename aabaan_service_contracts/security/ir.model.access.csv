@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_aabaan_service_tag_user,aabaan.service.tag.user,model_aabaan_service_tag,sales_team.group_sale_salesman,1,1,1,1
-access_aabaan_contract_site_user,aabaan.contract.site.user,model_aabaan_contract_site,sales_team.group_sale_salesman,1,1,1,1
-access_aabaan_contract_document_user,aabaan.contract.document.user,model_aabaan_contract_document,sales_team.group_sale_salesman,1,1,1,0
-access_aabaan_contract_document_manager,aabaan.contract.document.manager,model_aabaan_contract_document,sales_team.group_sale_manager,1,1,1,1

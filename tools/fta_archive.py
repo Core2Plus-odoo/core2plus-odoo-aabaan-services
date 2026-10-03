@@ -110,7 +110,7 @@ RETENTION_YEARS = 7
 # Only these reach the network. Anything else raises before the call is made.
 READ_ONLY_METHODS = frozenset({
     'search', 'search_read', 'search_count', 'read', 'fields_get',
-    'read_group', 'name_get', 'name_search', 'check_access_rights',
+    'read_group', 'name_search', 'check_access',
 })
 
 # The mandatory particulars of a UAE tax invoice (VAT Executive Regulation,

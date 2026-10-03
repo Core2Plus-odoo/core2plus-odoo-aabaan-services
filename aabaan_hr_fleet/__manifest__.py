@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan HR & Fleet',
-    'version': '19.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Human Resources',
     'summary': 'Finance P5+P6: native HR/Payroll/Attendance/Leave + Fleet, with vehicle-fine payroll recovery',
     'description': """

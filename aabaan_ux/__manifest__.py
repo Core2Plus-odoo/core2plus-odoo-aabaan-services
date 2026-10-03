@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Menu & UX',
-    'version': '19.0.1.0.1',
+    'version': '20.0.1.0.1',
     'category': 'Hidden/Tools',
     'summary': 'One deliberate information architecture for the Aabaan menus',
     'description': """

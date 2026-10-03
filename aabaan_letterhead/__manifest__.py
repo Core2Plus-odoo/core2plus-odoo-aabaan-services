@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Letterhead',
-    'version': '19.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Hidden/Tools',
     'summary': 'The one shared Aaban letterhead (header, footer, print helpers) for every PDF',
     'description': """

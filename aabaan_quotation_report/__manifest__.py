@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Quotation Report',
-    'version': '19.0.1.4.0',
+    'version': '20.0.1.4.0',
     'category': 'Sales/Sales',
     'summary': 'Branded quotation/contract PDF in the Aaban Services letterhead style',
     'description': """

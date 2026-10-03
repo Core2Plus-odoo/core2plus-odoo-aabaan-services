@@ -171,8 +171,7 @@ class AccountMove(models.Model):
         elif self.move_type == 'entry':
             required = [emirate_plan]
             lines = self.line_ids.filtered(
-                lambda l: (l.account_id.account_type or '').startswith(
-                    'expense'))
+                lambda l: l.account_id.internal_group == 'expense')
         else:
             return []
 

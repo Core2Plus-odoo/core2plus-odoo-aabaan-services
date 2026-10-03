@@ -10,8 +10,8 @@ class AabaanServiceTag(models.Model):
     name = fields.Char(required=True)
     color = fields.Integer(default=0)
 
-    # Odoo 19 constraint definition — the _sql_constraints list is
-    # deprecated and warns on every registry load.
+    # Declarative constraint: the old _sql_constraints list is no longer
+    # supported and only logs a warning (Odoo 20).
     _name_uniq = models.Constraint(
         'unique(name)',
         "A service tag with this name already exists.")

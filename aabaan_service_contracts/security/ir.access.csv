@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_aabaan_service_tag_user,aabaan.service.tag.user,aabaan.service.tag,sales_team.group_sale_salesman,crud,
+access_aabaan_contract_site_user,aabaan.contract.site.user,aabaan.contract.site,sales_team.group_sale_salesman,crud,
+access_aabaan_contract_document_user,aabaan.contract.document.user,aabaan.contract.document,sales_team.group_sale_salesman,cru,
+access_aabaan_contract_document_manager,aabaan.contract.document.manager,aabaan.contract.document,sales_team.group_sale_manager,crud,

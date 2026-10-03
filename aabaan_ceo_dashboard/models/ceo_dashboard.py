@@ -203,11 +203,13 @@ class AabaanCeoDashboard(models.AbstractModel):
         """Posted lines on an expense account.
 
         Account type, not move type: a payroll journal entry is a cost even
-        though it is not a vendor bill. In Odoo 19 the ``expense`` prefix
-        covers expense, expense_depreciation and expense_direct_cost.
+        though it is not a vendor bill. ``internal_group`` is Odoo's own
+        grouping of the account types (it is ``account_type`` up to the
+        first underscore), so this picks up every current and future
+        ``expense_*`` type without this module tracking the list.
         """
         domain = [('parent_state', '=', 'posted'),
-                  ('account_id.account_type', 'like', 'expense')]
+                  ('account_id.internal_group', '=', 'expense')]
         if start is not None:
             domain.append(('date', '>=', fields.Date.to_string(start)))
         if end is not None:

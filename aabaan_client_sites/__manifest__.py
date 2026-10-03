@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Client Sites & Areas',
-    'version': '19.0.1.5.0',
+    'version': '20.0.1.5.0',
     'category': 'Sales/CRM',
     'post_init_hook': '_post_init_hook',
     'summary': 'Areas on contacts and multi-location clients, wired through visits and contracts',

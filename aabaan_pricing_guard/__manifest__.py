@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Pricing Guard',
-    'version': '19.0.1.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Sales/Sales',
     'summary': 'Blocks quotations that would bill nothing, and shows which AED 0 products are safe to archive',
     'description': """

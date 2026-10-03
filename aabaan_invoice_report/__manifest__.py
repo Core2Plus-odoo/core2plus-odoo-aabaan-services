@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Invoice Report',
-    'version': '19.0.1.1.0',
+    'version': '20.0.1.1.0',
     'category': 'Accounting/Accounting',
     'summary': 'FTA-compliant Tax Invoice PDF plus a native Document Audit Trail on customer invoices',
     'description': """

@@ -1,7 +1,7 @@
 # Part of the Aabaan Odoo build by C2P Consultants FZC LLC.
 {
     'name': 'Aabaan Data Enrichment',
-    'version': '19.0.1.1.0',
+    'version': '20.0.1.1.0',
     'post_init_hook': '_post_init_hook',
     'category': 'Sales/Sales',
     'summary': 'Auto-tag contract emirates and enrich customer contacts from real evidence',
