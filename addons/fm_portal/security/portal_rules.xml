@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- A portal user sees a task only while following it (project's
+         project_task_rule_portal), and the customer follows almost none of
+         their visits: on the database, 1 of 3,902. So their jobs were
+         simply invisible on the portal.
+
+         This rule is deliberately a GROUP rule: group rules are OR-ed, so it
+         widens what a portal user may read: their own company's FSM
+         visits, without narrowing anything project already grants. Read
+         only; a customer changes nothing on a visit from here. Subscribing
+         every customer to every visit would have done the same, and also
+         mailed them on every stage change of 3,900 visits. -->
+    <record id="rule_portal_fsm_task_customer" model="ir.rule">
+        <field name="name">FM Portal: a customer reads the visits of their own company</field>
+        <field name="model_id" ref="project.model_project_task"/>
+        <field name="domain_force">[
+            ('is_fsm', '=', True),
+            ('active', '=', True),
+            ('partner_id', 'child_of', [user.partner_id.commercial_partner_id.id]),
+        ]</field>
+        <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

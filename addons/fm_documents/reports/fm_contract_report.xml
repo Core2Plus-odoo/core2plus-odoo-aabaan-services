@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_fm_contract" model="ir.actions.report">
+        <field name="name">Service Agreement</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fm_documents.report_fm_contract_document</field>
+        <field name="report_file">fm_documents.report_fm_contract_document</field>
+        <!-- Deliberately NOT bound into the Print menu: sale.order already
+             offers "Quotation / Order" there, and a second entry named
+             Quotation on every ordinary sale is worse than no entry. The
+             two buttons in views/sale_order_views.xml print these, gated
+             on is_fm_contract. The binding is cleared explicitly rather
+             than just dropped from this file, because an upgrade only
+             writes the fields it finds here. The old binding would
+             otherwise survive pointing at fm.contract, and its
+             ondelete=cascade would take this action down with that model. -->
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'Service Agreement - %s' % (object.partner_id.name or object.name)</field>
+    </record>
+
+    <!-- Signable legal Service Agreement — mirrors the numbered-Article AMC
+         contract format historically used (First/Second Party, scope,
+         pricing table, standard terms, signature blocks), generated from the
+         contract's own data instead of a one-off Word/PDF per customer.
+
+         NOTE for future editors: fm_branch.report_fm_contract_branch inherits
+         this template via an xpath anchored on the div with
+         t-field="o.company_id.partner_id" below — keep that attribute if you
+         edit this file, or fm_branch will fail to load on the next production
+         upgrade (see CLAUDE.md section 5 history / the 2026-07 hotfix). -->
+    <template id="report_fm_contract_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <!-- Aaban's own contract document when the agreement template is a
+                     Client Document Layout; this generic agreement otherwise. -->
+                <t t-if="o.agreement_client_layout">
+                    <t t-call="fm_documents.report_fm_client_contract_page"/>
+                </t>
+                <t t-else="">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:12.5px; line-height:1.55; color:#2b2b2b;">
+                        <style>
+                            /* Enlarge the standard Odoo letterhead logo on this report only. */
+                            .header img, .o_company_logo { max-height: 90px !important; max-width: 260px !important; width: auto !important; height: auto !important; }
+                        </style>
+                        <t t-set="aed" t-value="o.env['res.currency'].with_context(active_test=False).search([('name', '=', 'AED')], limit=1)"/>
+                        <div class="row mb-4">
+                            <div class="col-7">
+                                <h2 class="mb-0" style="color:#1C2B3A; font-size:24px; font-weight:700;">Service Agreement</h2>
+                                <div style="font-size:13px; color:#777;" dir="rtl">اتفاقية الخدمة</div>
+                            </div>
+                            <div class="col-5">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Ref#</td>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.fm_contract_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Date</td>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.fm_start_date"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-4" style="border-left:4px solid #EE7A22; padding:6px 10px; background:#fafafa;">
+                            <strong t-esc="o.subject or (o.partner_id.name or '')"/>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <div style="border:1px solid #ddd; border-radius:3px;">
+                                    <div style="background:#1C2B3A; color:#fff; padding:4px 10px; font-weight:bold;">First Party</div>
+                                    <div style="padding:8px 10px;">
+                                        <div t-field="o.company_id.partner_id"
+                                             t-options='{"widget": "contact", "fields": ["name", "address", "phone"]}'/>
+                                        <div t-if="o.company_id.company_registry">
+                                            License No: <span t-field="o.company_id.company_registry"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div style="border:1px solid #ddd; border-radius:3px;">
+                                    <div style="background:#1C2B3A; color:#fff; padding:4px 10px; font-weight:bold;">Second Party</div>
+                                    <div style="padding:8px 10px;">
+                                        <div t-field="o.partner_id"
+                                             t-options='{"widget": "contact", "fields": ["name", "address", "phone"]}'/>
+                                        <t t-if="o.fm_customer_contact_ids">
+                                            <div class="text-muted">
+                                                Contact: <span t-esc="o.fm_customer_contact_ids[0].name"/>
+                                                <span t-if="o.fm_customer_contact_ids[0].phone">
+                                                    — <span t-field="o.fm_customer_contact_ids[0].phone"/>
+                                                </span>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 1 — Duration of the Contract</h5>
+                        <p>
+                            This contract is valid from <span t-field="o.fm_start_date"/>
+                            to <span t-field="o.fm_end_date"/>.
+                        </p>
+
+                        <!-- ==========================================================
+                             STANDALONE MODE — the contract's own article list (copied
+                             from a "defines the full document" template, then edited
+                             per contract) IS the document body, auto-numbered after
+                             Article 1. This mirrors the real Aaban documents: each
+                             service has its own article structure (Water Tank: Tank
+                             Details/Safety/Customer Responsibility…; Anti-Termite:
+                             Treatment Type/Warranty…; Dubai Pest Control: Municipality
+                             Local Order 11 terms) — not one shared skeleton.
+                             ========================================================== -->
+                        <t t-if="o.agreement_standalone">
+                            <t t-foreach="o.agreement_line_ids" t-as="aline">
+                                <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">
+                                    <t t-esc="'Article %d — %s' % (aline_index + 2, aline.name)"/>
+                                </h5>
+                                <p t-esc="o._fm_render_agreement_text(aline.body)" style="white-space:pre-wrap;"/>
+                            </t>
+
+                            <t t-if="o.scope_notes or o.fm_service_inclusions">
+                                <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Covered Area</h5>
+                                <p t-if="o.scope_notes" t-esc="o._fm_render_agreement_text(o.scope_notes)" style="white-space:pre-wrap;"/>
+                                <ul t-elif="o.fm_service_inclusions">
+                                    <li t-foreach="o.fm_service_inclusions" t-as="incl" t-esc="incl.name"/>
+                                </ul>
+                            </t>
+                            <p t-if="o.treatment_notes" style="white-space:pre-wrap;">
+                                <strong>Treatment / Method:</strong> <span t-esc="o._fm_render_agreement_text(o.treatment_notes)"/>
+                            </p>
+
+                            <!-- Pricing table (keep in sync with the skeleton branch below). -->
+                            <t t-set="priced_lines" t-value="o.order_line.filtered(lambda l: not l.display_type)"/>
+                            <table t-if="priced_lines" class="table table-sm mb-1" style="margin-top:14px; border-collapse:collapse; width:100%; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#1C2B3A; color:#fff;">
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700;">Description</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Qty</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Rate</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Tax</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="priced_lines" t-as="line">
+                                        <td style="padding:6px 8px; border:1px solid #ddd;">
+                                            <span t-field="line.name"/>
+                                            <div class="text-muted" style="font-size:11px;">
+                                                Frequency:
+                                                <span t-if="o.visit_frequency == 'custom'">
+                                                    Every <t t-esc="o.custom_interval_days or 30"/> days
+                                                </span>
+                                                <span t-elif="o.visit_frequency" t-field="o.visit_frequency"/>
+                                            </div>
+                                        </td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.product_uom_qty"/></td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_tax" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_total" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p t-else="" class="text-muted" style="margin-top:14px; border:1px dashed #ccc; padding:8px 10px; font-size:11px;">
+                                No priced service lines yet — add products via "Edit Products (Sales Order)" on the contract.
+                            </p>
+                            <table t-if="priced_lines" style="width:45%; margin-left:auto; border-collapse:collapse;">
+                                <tr style="font-weight:bold; background:#fdf1e6;">
+                                    <td style="padding:6px 8px; border:1px solid #EE7A22;">Total Amount</td>
+                                    <td style="padding:6px 8px; border:1px solid #EE7A22; text-align:right;"><span t-field="o.fm_tcv" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                </tr>
+                            </table>
+
+                            <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">
+                                <t t-esc="'Article %d — Payment Terms' % (len(o.agreement_line_ids) + 2)"/>
+                            </h5>
+                            <p t-if="o.payment_terms_note" t-esc="o._fm_render_agreement_text(o.payment_terms_note)" style="white-space:pre-wrap;"/>
+                            <p t-else="">
+                                <span t-field="o.payment_term_id"/>
+                            </p>
+                        </t>
+
+                        <!-- ==========================================================
+                             SKELETON MODE — the generic 18-article agreement, used when
+                             no full-document template applies (legacy contracts, or a
+                             service with no template yet).
+                             ========================================================== -->
+                        <t t-if="not o.agreement_standalone">
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 2 — Service</h5>
+                        <p t-if="o.service_text or o.agreement_template_id.service_text"
+                           t-esc="o._fm_render_agreement_text(o.service_text or o.agreement_template_id.service_text)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            <span t-field="o.company_id.name"/> agrees to supply the services described
+                            below to the Second Party at the site stated above, in accordance with the
+                            schedule detailed in this agreement. The First Party will ensure that
+                            everyone providing the services has the necessary training and authorization
+                            to do so.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 3 — Scope of Work</h5>
+                        <p t-if="o.scope_notes" t-esc="o._fm_render_agreement_text(o.scope_notes)" style="white-space:pre-wrap;"/>
+                        <ul t-elif="o.fm_service_inclusions">
+                            <li t-foreach="o.fm_service_inclusions" t-as="incl" t-esc="incl.name"/>
+                        </ul>
+                        <p t-else="" class="text-muted">Scope of work as agreed with the Second Party for the site stated above.</p>
+
+                        <p t-if="o.treatment_notes" style="white-space:pre-wrap;">
+                            <strong>Treatment / Method:</strong> <span t-esc="o._fm_render_agreement_text(o.treatment_notes)"/>
+                        </p>
+
+                        <t t-set="priced_lines" t-value="o.order_line.filtered(lambda l: not l.display_type)"/>
+                        <table t-if="priced_lines" class="table table-sm mb-1" style="margin-top:14px; border-collapse:collapse; width:100%; font-size:12px;">
+                            <thead>
+                                <tr style="background:#1C2B3A; color:#fff;">
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700;">Description</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Qty</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Rate</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Tax</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="priced_lines" t-as="line">
+                                    <td style="padding:6px 8px; border:1px solid #ddd;">
+                                        <span t-field="line.name"/>
+                                        <div class="text-muted" style="font-size:11px;">
+                                            Frequency:
+                                            <span t-if="o.visit_frequency == 'custom'">
+                                                Every <t t-esc="o.custom_interval_days or 30"/> days
+                                            </span>
+                                            <span t-elif="o.visit_frequency" t-field="o.visit_frequency"/>
+                                        </div>
+                                    </td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.product_uom_qty"/></td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_tax" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_total" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p t-else="" class="text-muted" style="margin-top:14px; border:1px dashed #ccc; padding:8px 10px; font-size:11px;">
+                            No priced service lines yet — add products via "Edit Products (Sales Order)" on the contract.
+                        </p>
+                        <table t-if="priced_lines" style="width:45%; margin-left:auto; border-collapse:collapse;">
+                            <tr style="font-weight:bold; background:#fdf1e6;">
+                                <td style="padding:6px 8px; border:1px solid #EE7A22;">Total Amount</td>
+                                <td style="padding:6px 8px; border:1px solid #EE7A22; text-align:right;"><span t-field="o.fm_tcv" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                            </tr>
+                        </table>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 4 — Service Schedule</h5>
+                        <p t-if="o.schedule_text or o.agreement_template_id.schedule_text"
+                           t-esc="o._fm_render_agreement_text(o.schedule_text or o.agreement_template_id.schedule_text)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            The customer agrees to fulfil all technical guidelines requested by
+                            <span t-field="o.company_id.name"/> to secure the best results. The Second
+                            Party will make its representative available with the technicians during
+                            treatment. Any area not made ready for a scheduled visit will be skipped and
+                            treated on the next scheduled visit.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 5 — Unscheduled Services and Conditions of Supply</h5>
+                        <p>
+                            The First Party will attend to unscheduled services at the request of the
+                            Second Party
+                            <t t-if="o.unscheduled_visits_included">
+                                up to <span t-esc="o.unscheduled_visits_included"/> time(s)
+                            </t>
+                            during the whole contract period, at no additional charge where the request
+                            concerns an area previously serviced and still under warranty. Any further
+                            service will be provided after quotation approval by the Second Party.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 6 — Exclusions</h5>
+                        <ul t-if="o.fm_service_exclusions">
+                            <li t-foreach="o.fm_service_exclusions" t-as="excl" t-esc="excl.name"/>
+                        </ul>
+                        <p t-elif="o.exclusions_text or o.agreement_template_id.exclusions_default_text"
+                           t-esc="o._fm_render_agreement_text(o.exclusions_text or o.agreement_template_id.exclusions_default_text)" style="white-space:pre-wrap;"/>
+                        <p t-else="">This contract excludes anything not explicitly listed under Article 3.</p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 7 — Commencement of Services</h5>
+                        <p>
+                            The First Party will commence the agreed services within ten (10) days from
+                            the date the Second Party signs this contract and returns it to the First
+                            Party. The Second Party agrees to provide access to the areas to be serviced
+                            during the agreed hours.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 8 — Contract Termination</h5>
+                        <p>
+                            At the end of the contract period, this contract remains valid and renews
+                            under the same conditions unless cancelled by either party giving
+                            <span t-esc="o.termination_notice_days or 30"/> days' written notice.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 9 — Payment Terms</h5>
+                        <p t-if="o.payment_terms_note" t-esc="o._fm_render_agreement_text(o.payment_terms_note)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            <span t-field="o.payment_term_id"/>
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 10 — Force Majeure</h5>
+                        <p>
+                            Neither party shall be liable for any failure or delay in performing its
+                            obligations under this agreement where such failure or delay results from
+                            causes beyond its reasonable control, including acts of God, natural disaster,
+                            war, civil unrest, government action, epidemic, or failure of public utilities.
+                            The affected party shall notify the other without undue delay and resume
+                            performance as soon as reasonably practicable.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 11 — Limitation of Liability</h5>
+                        <p>
+                            The First Party's total liability arising out of or in connection with this
+                            agreement shall not exceed the total fees paid by the Second Party in the
+                            twelve (12) months preceding the claim. Neither party shall be liable to the
+                            other for indirect, incidental, or consequential loss or damage.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 12 — Compliance with Laws and Health &amp; Safety</h5>
+                        <p>
+                            Both parties shall comply with all applicable UAE federal and local laws,
+                            regulations, and municipal requirements relevant to the services provided,
+                            including applicable health, safety, and environmental regulations. The First
+                            Party's personnel will follow standard safety practices while on site.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 13 — Confidentiality</h5>
+                        <p>
+                            Each party shall keep confidential any non-public information obtained from
+                            the other party in connection with this agreement and shall not disclose it to
+                            third parties without the other party's prior written consent, except where
+                            disclosure is required by law.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 14 — Insurance</h5>
+                        <p>
+                            The First Party shall maintain adequate insurance coverage, including public
+                            liability insurance, appropriate to the services provided under this
+                            agreement, and shall provide evidence of such coverage upon the Second Party's
+                            reasonable request.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 15 — Assignment</h5>
+                        <p>
+                            Neither party may assign or transfer its rights or obligations under this
+                            agreement without the other party's prior written consent, except to an
+                            affiliate or successor in connection with a merger, acquisition, or
+                            reorganization.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 16 — Notices</h5>
+                        <p>
+                            All notices under this agreement shall be in writing and delivered by hand,
+                            courier, registered mail, or email to the addresses or contacts stated in this
+                            agreement, and shall be deemed received upon confirmed delivery.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 17 — Governing Law and Dispute Resolution</h5>
+                        <p>
+                            This agreement is governed by and construed in accordance with the laws of the
+                            United Arab Emirates. Any dispute arising out of or in connection with this
+                            agreement shall first be referred to good-faith negotiation between the
+                            parties; if not resolved within thirty (30) days, it shall be referred to the
+                            competent courts of the Emirate in which the First Party is registered.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Article 18 — Entire Agreement and Amendments</h5>
+                        <p>
+                            This agreement, together with any annexes and schedules referenced herein,
+                            constitutes the entire agreement between the parties and supersedes all prior
+                            discussions, negotiations, and agreements relating to its subject matter. Any
+                            amendment must be made in writing and signed by both parties.
+                        </p>
+
+                        <t t-if="o.agreement_line_ids">
+                            <h4 style="color:#1C2B3A; font-size:15px; font-weight:700; margin-top:24px; margin-bottom:4px;">Additional Terms</h4>
+                            <t t-foreach="o.agreement_line_ids" t-as="aline">
+                                <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:16px; margin-bottom:8px;">
+                                    <span t-esc="aline.name"/>
+                                </h5>
+                                <p t-esc="o._fm_render_agreement_text(aline.body)" style="white-space:pre-wrap;"/>
+                            </t>
+                        </t>
+                        </t> <!-- end skeleton mode -->
+
+                        <t t-if="o.fm_sla_rule_ids">
+                            <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Annex A — Service Levels</h5>
+                            <table class="table table-sm mb-3" style="border-collapse:collapse; width:100%;">
+                                <thead>
+                                    <tr style="background:#1C2B3A; color:#fff;">
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A;">Severity</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; text-align:right;">Response (min)</th>
+                                        <th style="padding:6px 8px; border:1px solid #1C2B3A; text-align:right;">Resolution (min)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="o.fm_sla_rule_ids" t-as="s">
+                                        <td style="padding:6px 8px; border:1px solid #ddd;"><span t-field="s.severity"/></td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="s.response_target_minutes"/></td>
+                                        <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="s.resolution_target_minutes"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <div class="row mt-5" style="page-break-inside: avoid;">
+                            <div class="col-6">
+                                <div style="border:1px solid #ddd; padding:10px; min-height:70px;">
+                                    <div style="color:#666;">Second Party</div>
+                                    <div><span t-field="o.partner_id.name"/></div>
+                                    <div style="margin-top:30px; border-top:1px solid #000; width:80%;">Signature</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div style="border:1px solid #ddd; padding:10px; min-height:70px;">
+                                    <div style="color:#666;">First Party</div>
+                                    <div><span t-field="o.company_id.name"/></div>
+                                    <div style="margin-top:30px; border-top:1px solid #000; width:80%;">Signature</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-muted mt-4" style="font-size:11px; border-top:1px solid #ddd; padding-top:6px;">
+                            TRN: <span t-field="o.company_id.vat"/> · All amounts in AED unless stated.
+                        </div>
+                    </div>
+                </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

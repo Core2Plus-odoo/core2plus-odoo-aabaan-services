@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Keeps a rolling horizon of planned FSM visits populated for active,
+         auto-scheduled contracts.
+
+         Now reads sale.order, because a contract is a sale order. It used to
+         read fm.contract, which is frozen and being retired; a cron pointing
+         at a model on its way out is a build failure waiting for the day the
+         model goes.
+
+         STILL SHIPPED INACTIVE. Turning it on is a deliberate decision, not
+         a side effect of this re-point: it writes visits into people's
+         calendars unattended, and a schedule that appears with nothing on
+         screen to say what made it is worse than one somebody pressed a
+         button for. Confirming an order already fills its horizon, and
+         Generate Visits schedules the full term on demand, so nothing
+         depends on this cron today.
+
+         Switching it on is a two-minute job from Settings > Technical >
+         Scheduled Actions.
+
+         (An earlier version of this comment claimed a second generator,
+         sale.order._generate_visit_schedule in aabaan_visit_schedule, ran
+         on this platform too. It does not: that module is in the separate
+         Core2Plus-odoo/aabaan repository on a different Odoo.sh instance.) -->
+    <record id="cron_fm_fsm_auto_schedule" model="ir.cron">
+        <field name="name">FM: Auto-schedule Field Service visits (off by default)</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_schedule()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="False"/>
+    </record>
+
+</odoo>

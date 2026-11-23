@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add the handling branch to the Work Order job sheet -->
+    <template id="report_fm_workorder_branch" inherit_id="fm_documents.report_fm_workorder_document">
+        <xpath expr="//div[span[@t-field='o.fm_location_id']]" position="after">
+            <div t-if="o.branch_id"><strong>Branch / الفرع:</strong> <span t-field="o.branch_id"/></div>
+        </xpath>
+    </template>
+
+    <!-- Add the branch to the Service Agreement, under the First Party block. -->
+    <template id="report_fm_contract_branch" inherit_id="fm_documents.report_fm_contract_document">
+        <xpath expr="//div[@t-field='o.company_id.partner_id']" position="after">
+            <div t-if="o.branch_id"><strong>Branch / الفرع:</strong> <span t-field="o.branch_id"/></div>
+        </xpath>
+    </template>
+
+    <!-- Add the branch to the Quotation, under the pricing footer. -->
+    <template id="report_fm_quotation_branch" inherit_id="fm_documents.report_fm_quotation_document">
+        <xpath expr="//h5[text()='Payment Terms']" position="before">
+            <div t-if="o.branch_id" class="mb-2"><strong>Branch / الفرع:</strong> <span t-field="o.branch_id"/></div>
+        </xpath>
+    </template>
+
+    <!-- The branch's image (Branches → image, top right of the form),
+         printed on the left under the company's sign-off: after the
+         Quotation's closing wording, and under the company's own signature
+         line (First Party) on the Service Agreement. Both documents have a
+         generic and a client-layout page, so all four carry it. Printed
+         only when the contract's "Add Stamp" box is ticked and the branch
+         has an image. Inline styles only:
+         wkhtmltopdf does not load the web asset bundles. -->
+    <template id="fm_branch_signature_image">
+        <t t-set="fm_stamp_height" t-value="fm_stamp_height or 170"/>
+        <div t-if="o.fm_add_stamp and o.branch_id.image_1920" style="padding-top:4px; page-break-inside:avoid;">
+            <img t-att-src="image_data_uri(o.branch_id.image_1024)"
+                 t-att-style="'max-height:%spx; max-width:320px;' % fm_stamp_height" alt="Branch"/>
+        </div>
+    </template>
+
+    <template id="report_fm_quotation_branch_image" inherit_id="fm_documents.report_fm_quotation_document">
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <t t-call="fm_branch.fm_branch_signature_image"/>
+        </xpath>
+    </template>
+
+    <!-- The client-layout quotation closes with its own wording (payment
+         terms, regards, company name), so the image goes after all of it,
+         under the company name on the left. Shorter than on the agreement:
+         that wording usually ends low on the page, and a stamp that does not
+         fit is carried whole onto a page of its own. -->
+    <template id="report_fm_client_quotation_branch_image" inherit_id="fm_documents.report_fm_client_quotation_page">
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <t t-call="fm_branch.fm_branch_signature_image">
+                <t t-set="fm_stamp_height" t-value="140"/>
+            </t>
+        </xpath>
+    </template>
+
+    <template id="report_fm_contract_branch_image" inherit_id="fm_documents.report_fm_contract_document">
+        <xpath expr="//div[div[text()='First Party']]" position="inside">
+            <t t-call="fm_branch.fm_branch_signature_image"/>
+        </xpath>
+    </template>
+
+    <template id="report_fm_client_contract_branch_image" inherit_id="fm_documents.report_fm_client_contract_page">
+        <xpath expr="//div[div[@t-out='o.agreement_signature_party or o.company_id.name']]" position="inside">
+            <t t-call="fm_branch.fm_branch_signature_image"/>
+        </xpath>
+    </template>
+
+</odoo>

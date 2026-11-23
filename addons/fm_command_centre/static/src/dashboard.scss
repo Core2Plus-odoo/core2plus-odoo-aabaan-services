@@ -1,0 +1,634 @@
+// CEO Dashboard — styled after the client's "Two Businesses, One View" PDF.
+$cc-navy: #1c2f57;
+$cc-navy-2: #233a69;
+$cc-orange: #ec6a1e;
+$cc-orange-soft: #fdf0e6;
+$cc-blue: #2f5c9e;
+$cc-teal: #17a5a2;
+$cc-green: #1f9d6c;
+$cc-green-soft: #e6f5ee;
+$cc-amber: #d59a0e;
+$cc-amber-bg: #f2a922;
+$cc-red: #d9303e;
+$cc-red-soft: #fde8ea;
+$cc-ink: #1c2f57;
+$cc-muted: #6b7690;
+$cc-line: #e5e8f0;
+$cc-soft: #f4f5f9;
+
+.o_cc_root {
+    height: 100%;
+    overflow: auto;
+    background: #eef0f5;
+    color: $cc-ink;
+    font-size: 14px;
+
+    .o_cc_toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 20px;
+        padding: 10px 20px;
+        background: #fff;
+        border-bottom: 1px solid $cc-line;
+        .o_cc_month {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            input { width: 170px; }
+            .btn { font-size: 18px; line-height: 1; padding: 6px 12px; }
+        }
+        .o_cc_switch {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            cursor: pointer;
+        }
+        // buttons always start a second row, in both dashboards
+        .o_cc_break { flex-basis: 100%; height: 0; }
+        .o_cc_service { width: 210px; }
+        .o_cc_sections {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            .o_cc_sec {
+                border: 1px solid $cc-line;
+                background: #fff;
+                color: $cc-ink;
+                border-radius: 18px;
+                padding: 4px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                white-space: nowrap;
+                &:hover { border-color: $cc-orange; color: $cc-orange; }
+                &.active { background: $cc-navy; border-color: $cc-navy; color: #fff; }
+                .o_cc_sec_num {
+                    display: inline-block;
+                    min-width: 18px;
+                    border-radius: 9px;
+                    background: $cc-orange;
+                    color: #fff;
+                    font-size: 10px;
+                    line-height: 18px;
+                    text-align: center;
+                    margin-right: 2px;
+                }
+            }
+        }
+        .o_cc_tools {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+
+    .o_cc_pages {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 16px 16px 32px;
+        transition: opacity .2s;
+        &.o_cc_busy { opacity: .55; }
+    }
+
+    .o_cc_page {
+        position: relative;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(28, 47, 87, .08);
+        padding: 30px 40px 70px;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    // footer strip, as on every PDF page
+    .o_cc_footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 40px;
+        background: $cc-navy;
+        border-top: 5px solid $cc-orange;
+        color: #fff;
+        font-size: 13px;
+        span:first-child { font-weight: 700; }
+        span:last-child { opacity: .85; }
+    }
+
+    // ---------- cover ----------
+    .o_cc_cover {
+        text-align: center;
+        .o_cc_logo { height: 100px; width: auto; max-width: 280px; object-fit: contain; margin: 6px auto 16px; display: block; }
+        .o_cc_pill {
+            display: inline-block;
+            background: $cc-navy;
+            color: #fff;
+            letter-spacing: .25em;
+            font-weight: 700;
+            font-size: 17px;
+            padding: 12px 34px;
+            border-radius: 28px;
+        }
+        h1 {
+            margin: 18px 0 8px;
+            font-size: 42px;
+            font-weight: 800;
+            color: $cc-navy;
+            span { color: $cc-orange; }
+        }
+        .o_cc_lead { color: $cc-muted; font-size: 16px; max-width: 560px; margin: 0 auto 14px; }
+        .o_cc_chips {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            span {
+                border: 1.5px solid $cc-line;
+                border-radius: 20px;
+                padding: 5px 14px;
+                font-weight: 600;
+                font-size: 13px;
+            }
+            .o_cc_chip_odoo { border-color: #714b67; color: #714b67; }
+            .o_cc_chip_service { border-color: $cc-orange; color: $cc-orange; }
+        }
+        .o_cc_fine { color: $cc-muted; font-size: 12px; margin-top: 14px; }
+    }
+
+    .o_cc_hero {
+        background: $cc-navy;
+        color: #fff;
+        border-radius: 14px;
+        padding: 18px 20px;
+        text-align: left;
+        cursor: pointer;
+        .o_cc_hero_top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+        .o_cc_hero_label { letter-spacing: .14em; font-size: 12px; font-weight: 700; opacity: .8; }
+        .o_cc_hero_value { font-size: 38px; font-weight: 800; line-height: 1.1; }
+        .o_cc_hero_target { opacity: .8; }
+        .o_cc_hero_ach { font-size: 20px; font-weight: 800; }
+    }
+    .o_cc_split {
+        display: flex;
+        gap: 3px;
+        border-radius: 8px;
+        overflow: hidden;
+        > div {
+            min-width: 0;
+            padding: 9px 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .o_cc_split_amc { background: $cc-blue; }
+        .o_cc_split_cash { background: $cc-orange; }
+    }
+
+    .o_cc_tiles4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 12px 0 14px;
+    }
+    .o_cc_tile {
+        background: $cc-navy;
+        color: #fff;
+        border-radius: 12px;
+        padding: 12px 8px;
+        display: flex;
+        flex-direction: column;
+        cursor: default;
+        b { font-size: 26px; font-weight: 800; }
+        span { opacity: .9; }
+        small { opacity: .7; font-size: 11px; }
+    }
+    .o_cc_index {
+        background: $cc-soft;
+        border-radius: 12px;
+        padding: 14px 18px;
+        text-align: left;
+        .o_cc_index_title { font-weight: 800; margin-bottom: 6px; }
+        .o_cc_index_grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px 12px;
+            color: $cc-muted;
+        }
+    }
+
+    // ---------- section head ----------
+    .o_cc_brandbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        .o_cc_logo_sm { height: 46px; width: auto; max-width: 150px; object-fit: contain; }
+        .o_cc_eyebrow { color: $cc-orange; letter-spacing: .25em; font-weight: 700; font-size: 12px; }
+    }
+    .o_cc_head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        .o_cc_num {
+            background: $cc-orange;
+            color: #fff;
+            border-radius: 10px;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        h2 { margin: 0; font-size: 32px; font-weight: 800; color: $cc-navy; }
+    }
+    .o_cc_sub { color: $cc-muted; font-size: 15px; margin: 6px 0 18px; }
+    .o_cc_h3 { font-size: 18px; font-weight: 800; color: $cc-navy; margin: 22px 0 10px; }
+
+    // ---------- streams (section 1) ----------
+    .o_cc_two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 14px;
+    }
+    .o_cc_stream {
+        background: $cc-soft;
+        border-radius: 12px;
+        padding: 16px 18px;
+        border-top: 6px solid $cc-blue;
+        .o_cc_stream_title { font-weight: 800; font-size: 17px; }
+        .o_cc_stream_value { font-size: 32px; font-weight: 800; color: $cc-blue; line-height: 1.2; }
+        .o_cc_stream_meta { color: $cc-muted; font-size: 13px; }
+        .o_cc_progress {
+            height: 8px;
+            background: $cc-line;
+            border-radius: 5px;
+            margin: 12px 0 8px;
+            div { height: 100%; background: $cc-blue; border-radius: 5px; }
+        }
+        &.o_cc_stream_cash {
+            border-top-color: $cc-orange;
+            .o_cc_stream_value { color: $cc-orange; }
+            .o_cc_progress div { background: $cc-orange; }
+        }
+    }
+    .o_cc_kv {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-top: 1px solid $cc-line;
+        color: $cc-muted;
+        cursor: pointer;
+        b { color: $cc-ink; }
+    }
+
+    .o_cc_legend {
+        display: flex;
+        gap: 18px;
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 6px;
+        span::before {
+            content: "";
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 6px;
+            vertical-align: -1px;
+        }
+        .o_cc_lg_amc::before { background: $cc-blue; }
+        .o_cc_lg_cash::before { background: $cc-orange; }
+        .o_cc_lg_teal::before { background: $cc-teal; }
+    }
+
+    // ---------- svg charts ----------
+    .o_cc_svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        .o_cc_grid { stroke: $cc-line; stroke-width: 1; }
+        .o_cc_axis { fill: $cc-muted; font-size: 13px; }
+        .o_cc_axis_b { fill: $cc-ink; font-weight: 700; }
+        .o_cc_endlabel { fill: $cc-ink; font-size: 13px; font-weight: 700; }
+        .o_cc_line_amc { fill: none; stroke: $cc-blue; stroke-width: 3; }
+        .o_cc_line_cash { fill: none; stroke: $cc-orange; stroke-width: 3; }
+        .o_cc_dot_amc { fill: $cc-blue; }
+        .o_cc_dot_cash { fill: $cc-orange; }
+        .o_cc_bar_amc { fill: $cc-blue; }
+        .o_cc_bar_teal { fill: $cc-teal; }
+    }
+
+    // ---------- kpi boxes ----------
+    .o_cc_kpis {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        &.o_cc_kpis3 { grid-template-columns: repeat(3, 1fr); }
+    }
+    .o_cc_kpi {
+        border-radius: 12px;
+        padding: 14px 10px;
+        color: #fff;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        cursor: pointer;
+        min-height: 84px;
+        b { font-size: 28px; font-weight: 800; line-height: 1.15; }
+        span { opacity: .92; font-size: 13px; }
+        small { opacity: .8; font-size: 11px; }
+        &:hover { filter: brightness(1.06); }
+    }
+    .o_cc_bg_navy { background: $cc-navy; }
+    // value row under the AMC counts: same colours, lighter, so the pair reads
+    // as "how many" over "how much"
+    .o_cc_kpis_value { margin-top: 10px; }
+    .o_cc_val {
+        min-height: 64px;
+        background: #fff;
+        border: 2px solid;
+        b { font-size: 21px; }
+        span { opacity: 1; color: $cc-muted; }
+        &.o_cc_val_blue { border-color: $cc-blue; b { color: $cc-blue; } }
+        &.o_cc_val_teal { border-color: $cc-teal; b { color: $cc-teal; } }
+        &.o_cc_val_navy { border-color: $cc-navy; b { color: $cc-navy; } }
+    }
+    .o_cc_bg_blue { background: $cc-blue; }
+    .o_cc_bg_teal { background: $cc-teal; }
+    .o_cc_bg_orange { background: $cc-orange; }
+    .o_cc_bg_green { background: $cc-green; }
+    .o_cc_bg_red { background: $cc-red; }
+    .o_cc_age_b30 { background: $cc-green; }
+    .o_cc_age_b60 { background: $cc-amber-bg; }
+    .o_cc_age_b90 { background: $cc-orange; }
+    .o_cc_age_b90p { background: $cc-red; }
+
+    // ---------- tables ----------
+    .o_cc_table {
+        width: 100%;
+        margin-top: 16px;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid $cc-line;
+        th {
+            background: $cc-orange;
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 12px 10px;
+            .o_cc_th_sub { font-weight: 400; opacity: .85; letter-spacing: 0; }
+        }
+        td { padding: 9px 10px; border-top: 1px solid $cc-line; color: #4a5470; vertical-align: middle; }
+        tbody tr:nth-child(odd) td { background: $cc-soft; }
+        tbody tr { cursor: pointer; }
+        tbody tr:hover td { background: #e9edf6; }
+        tfoot td { font-weight: 800; color: $cc-ink; border-top: 2px solid $cc-navy; background: #eef1f7; }
+        small { display: block; }
+    }
+    .o_cc_matrix td { padding: 6px 8px; }
+    .o_cc_mix {
+        height: 5px;
+        border-radius: 3px;
+        background: $cc-orange;
+        margin: 3px auto 0;
+        max-width: 90px;
+        overflow: hidden;
+        .o_cc_mix_amc { height: 100%; background: $cc-blue; }
+    }
+    .o_cc_tablenote { color: $cc-muted; font-size: 12px; margin: 6px 2px 0; }
+    .o_cc_strong { font-weight: 700; color: $cc-ink !important; }
+    .o_cc_table td b { white-space: nowrap; }
+    .o_cc_good { color: $cc-green !important; }
+    .o_cc_warn { color: $cc-amber !important; }
+    .o_cc_bad { color: $cc-red !important; }
+    .o_cc_muted { color: $cc-muted !important; }
+    .o_cc_tag {
+        display: inline-block;
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        &.o_cc_tag_amc { background: #e3ecf8; color: $cc-blue; }
+        &.o_cc_tag_cash { background: $cc-orange-soft; color: #b8500f; }
+    }
+
+    // ---------- horizontal bars ----------
+    .o_cc_hbars { display: flex; flex-direction: column; gap: 8px; }
+    .o_cc_hbar {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        align-items: center;
+        cursor: pointer;
+        .o_cc_hbar_label { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .o_cc_hbar_track { display: flex; align-items: center; gap: 8px; }
+        .o_cc_hbar_fill { height: 24px; border-radius: 4px; }
+        .o_cc_fill_orange { background: $cc-orange; }
+        .o_cc_fill_navy { background: $cc-navy; }
+        .o_cc_hbar_val { font-weight: 700; font-size: 13px; white-space: nowrap; }
+    }
+
+    // stacked bars with target line (sections 4 and 8)
+    .o_cc_stack { display: flex; flex-direction: column; gap: 14px; margin: 8px 0; }
+    .o_cc_stack_row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        align-items: center;
+        cursor: pointer;
+        .o_cc_stack_label { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px; }
+    }
+    .o_cc_stack_track {
+        position: relative;
+        display: flex;
+        height: 30px;
+        gap: 2px;
+    }
+    .o_cc_seg {
+        height: 100%;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        padding-left: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        &.o_cc_seg_amc { background: $cc-blue; }
+        &.o_cc_seg_cash { background: $cc-orange; }
+    }
+    .o_cc_target {
+        position: absolute;
+        top: -6px;
+        bottom: -6px;
+        border-left: 2px dashed $cc-navy;
+    }
+    .o_cc_stack_pct {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: 700;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    // services list (section 5)
+    .o_cc_svc { display: flex; flex-direction: column; gap: 7px; }
+    .o_cc_svc_row {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        align-items: center;
+        cursor: pointer;
+        .o_cc_svc_label { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    }
+    .o_cc_svc_track {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        height: 22px;
+        .o_cc_seg { font-size: 11px; padding-left: 5px; }
+        .o_cc_svc_val { margin-left: 8px; font-size: 12px; color: $cc-muted; white-space: nowrap; b { color: $cc-ink; } }
+    }
+
+    // cash checks
+    .o_cc_checks {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .o_cc_check {
+        border-radius: 10px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        b { font-size: 14px; }
+        &.o_cc_check_ok { background: $cc-green-soft; b { color: #146c4a; } }
+        &.o_cc_check_warn { background: #fdf3d9; b { color: #8a5d00; } }
+    }
+
+    // callouts
+    .o_cc_note {
+        margin-top: 16px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border-left: 6px solid;
+        line-height: 1.5;
+        &.o_cc_note_green { background: $cc-green-soft; border-color: $cc-green; b { color: #146c4a; } }
+        &.o_cc_note_orange { background: $cc-orange-soft; border-color: $cc-orange; b { color: #9b4210; } }
+        &.o_cc_note_red { background: $cc-red-soft; border-color: $cc-red; b { color: #9e1b26; } }
+    }
+    .o_cc_two .o_cc_note { margin-top: 0; }
+    .o_cc_empty {
+        color: $cc-muted;
+        font-style: italic;
+        background: $cc-soft;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 860px) {
+        .o_cc_page { padding: 20px 16px 64px; }
+        .o_cc_footer { padding: 10px 16px; }
+        .o_cc_tiles4, .o_cc_kpis, .o_cc_index .o_cc_index_grid, .o_cc_checks {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .o_cc_two { grid-template-columns: 1fr; }
+        .o_cc_hbar, .o_cc_svc_row { grid-template-columns: 130px 1fr; }
+        .o_cc_table { display: block; overflow-x: auto; }
+        .o_cc_cover h1 { font-size: 30px; }
+        .o_cc_cover { grid-template-columns: minmax(0, 1fr) !important; }
+    }
+}
+
+// On screen: use the whole width and cut the scrolling. The per-page
+// letterhead and footer strip are print furniture, so they only print.
+@media screen {
+    .o_cc_root {
+        .o_cc_brandbar, .o_cc_footer, .o_cc_index { display: none; }
+        .o_cc_page { padding: 22px 26px 24px; margin-bottom: 0; }
+        .o_cc_pages { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .o_cc_head h2 { font-size: 26px; }
+        .o_cc_head .o_cc_num { min-width: 34px; height: 34px; font-size: 16px; }
+        .o_cc_sub { margin-bottom: 12px; }
+        .o_cc_h3 { margin: 16px 0 8px; font-size: 16px; }
+
+        // cover: one compact band, title left, figures right
+        .o_cc_cover {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+            gap: 24px;
+            align-items: center;
+            text-align: left;
+            .o_cc_logo { height: 70px; margin: 0 0 10px; }
+            .o_cc_pill { font-size: 13px; padding: 8px 22px; }
+            h1 { font-size: 32px; margin: 12px 0 6px; }
+            .o_cc_lead { margin: 0 0 10px; font-size: 14px; }
+            .o_cc_chips { justify-content: flex-start; margin-bottom: 0; }
+            .o_cc_tiles4 { margin-bottom: 0; }
+            .o_cc_fine { grid-column: 1 / -1; margin: 0; text-align: right; }
+        }
+    }
+}
+
+// Wide screens: two sections side by side.
+@media screen and (min-width: 1400px) {
+    .o_cc_root {
+        .o_cc_pages {
+            max-width: none;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 16px 24px 32px;
+        }
+        .o_cc_cover { grid-column: 1 / -1; }
+        // one section picked: give it the full width
+        .o_cc_pages.o_cc_single { grid-template-columns: minmax(0, 1fr); }
+        .o_cc_pages.o_cc_single .o_cc_svg { max-height: 340px; }
+        .o_cc_hbar, .o_cc_svc_row { grid-template-columns: 170px 1fr; }
+        .o_cc_stack_row { grid-template-columns: 120px 1fr; }
+        .o_cc_kpi b { font-size: 24px; }
+        .o_cc_stream .o_cc_stream_value { font-size: 26px; }
+        .o_cc_table td, .o_cc_table th { padding-left: 8px; padding-right: 8px; }
+    }
+}
+
+// Print / Save as PDF: one section per page, like the client's PDF.
+@media print {
+    @page { size: A4 portrait; margin: 8mm; }
+    .o_main_navbar, .o_control_panel, .o_cc_toolbar { display: none !important; }
+    .o_action_manager, .o_action, .o_content { overflow: visible !important; height: auto !important; }
+    .o_cc_root {
+        overflow: visible;
+        height: auto;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        .o_cc_pages { max-width: none; padding: 0; }
+        .o_cc_page {
+            box-shadow: none;
+            border-radius: 0;
+            margin: 0;
+            min-height: 277mm;
+            page-break-after: always;
+            break-after: page;
+        }
+        .o_cc_page:last-child { page-break-after: auto; break-after: auto; }
+    }
+}

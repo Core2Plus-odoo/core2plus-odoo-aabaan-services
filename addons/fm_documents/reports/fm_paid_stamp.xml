@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- PAID stamp, printed under the invoice totals once the invoice is
+         settled. Company name from the invoice's own company (Other Info →
+         Company), then PAID, then the payment date. Inline styles only:
+         wkhtmltopdf does not load the web asset bundles. -->
+    <template id="fm_paid_stamp">
+        <t t-set="fm_paid_date" t-value="o._fm_paid_stamp_date()"/>
+        <div t-if="fm_paid_date" class="fm_paid_stamp_wrap"
+             style="clear:both; text-align:right; padding:10px 0 4px 0; page-break-inside:avoid;">
+            <div style="display:inline-block; border:2px solid #1f9a3e; border-radius:6px; padding:2px;
+                        color:#1f9a3e; font-family:Arial, Helvetica, sans-serif; text-align:center;">
+                <div style="border:1px solid #1f9a3e; border-radius:4px; padding:3px 10px 4px;">
+                    <div style="font-size:8px; font-weight:bold; letter-spacing:.5px; text-transform:uppercase;
+                                border-bottom:1px solid #1f9a3e; padding-bottom:2px; white-space:nowrap;"
+                         t-esc="o.company_id.name"/>
+                    <div style="font-size:26px; line-height:1.1; font-weight:900; letter-spacing:4px; padding:1px 0;">PAID</div>
+                    <div style="font-size:8px; font-weight:bold; letter-spacing:.5px; border-top:1px solid #1f9a3e;
+                                padding-top:2px; white-space:nowrap;">
+                        PAYMENT DATE: <span t-esc="fm_paid_date.strftime('%d / %m / %Y')"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Odoo's own invoice print (Print → Invoices). -->
+    <template id="report_invoice_document_fm_paid_stamp" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[@id='total']" position="after">
+            <t t-call="fm_documents.fm_paid_stamp"/>
+        </xpath>
+    </template>
+
+</odoo>

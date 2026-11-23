@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Work Orders = native FSM tasks in the Facility Management project,
+         surfaced under the FM app root. -->
+    <record id="action_fm_workorders" model="ir.actions.act_window">
+        <field name="name">Work Orders</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">kanban,list,form,calendar,map,pivot,graph</field>
+        <!-- FM work orders are exactly the FSM tasks carrying an FM work type,
+             so filter on that instead of the project id: %(xmlid)d is NOT
+             interpolated in an action's domain or context in this build, and
+             would reach the client unparsed. The default project is baked into
+             the context by the post-load write below. -->
+        <field name="domain">[('fm_wo_type', '!=', False)]</field>
+        <field name="context">{'fsm_mode': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Schedule your first work order</p>
+            <p>Field Service tasks in the Facility Management project — reactive,
+               PPM, compliance and inspection jobs, planned and dispatched with
+               native Odoo Field Service.</p>
+        </field>
+    </record>
+
+    <!-- Bake the resolved FM project id into the action context so new work
+         orders default to the Facility Management project (context does not
+         support %(xmlid)d interpolation). -->
+    <function model="ir.actions.act_window" name="write"
+              eval="[[ref('action_fm_workorders')],
+                     {'context': &quot;{'fsm_mode': True, 'default_project_id': &quot; + str(ref('fsm_project_fm')) + '}'}]"/>
+
+    <menuitem id="menu_fm_workorders_root"
+              name="Scheduling &amp; Work Orders"
+              parent="fm_asset.menu_fm_root"
+              sequence="30"/>
+
+    <menuitem id="menu_fm_workorders"
+              parent="menu_fm_workorders_root"
+              action="action_fm_workorders"
+              sequence="1"/>
+
+    <!-- Visit Calendar: see auto-scheduled and reactive visits on a calendar. -->
+    <record id="action_fm_visit_calendar" model="ir.actions.act_window">
+        <field name="name">Visit Calendar</field>
+        <field name="res_model">project.task</field>
+        <field name="view_mode">calendar,list,kanban,form</field>
+        <field name="view_id" ref="view_fm_task_calendar"/>
+        <field name="domain">[('fm_wo_type', '!=', False)]</field>
+        <field name="context">{'fsm_mode': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No visits scheduled yet</p>
+            <p>Planned visits appear here once contracts are activated (auto-scheduling)
+               or you use <b>Generate Visits</b> on a contract.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_fm_visit_calendar"
+              name="Visit Calendar"
+              parent="menu_fm_workorders_root"
+              action="action_fm_visit_calendar"
+              sequence="2"/>
+
+    <!-- FM Configuration root (replaces the retired fm_workorder config menu). -->
+    <menuitem id="menu_fm_config_root"
+              name="Configuration"
+              parent="fm_asset.menu_fm_root"
+              sequence="99"/>
+
+    <!-- ================================================================
+         Lifecycle journey ordering (config, no new models).
+         Re-sequence the existing top-level FM sections so the app reads in
+         the order the team actually works:
+           Onboarding & Contracts → Assets → Scheduling → Compliance →
+           Health (dashboards) → Configuration.
+         NOTE: a re-declared <menuitem> without a `parent` attribute RESETS
+         parent_id to False in Odoo 19 (_tag_menuitem defaults
+         {'parent_id': False}) — always repeat the parent here.
+         ================================================================ -->
+
+    <!-- 1. Onboarding & Contracts first (Customers → Contracts → Service Items). -->
+    <menuitem id="fm_contract.menu_fm_contracts_root"
+              name="Contracts"
+              parent="fm_asset.menu_fm_root"
+              sequence="10"/>
+
+    <!-- 2. Assets. -->
+    <menuitem id="fm_asset.menu_fm_assets_root"
+              name="Assets"
+              parent="fm_asset.menu_fm_root"
+              sequence="20"/>
+
+</odoo>

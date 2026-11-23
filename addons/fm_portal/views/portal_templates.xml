@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The three FM cards on /my, in the Services row. Invoices and
+         quotations already have their cards from account and sale. The
+         Service Request card is a config card so it shows before the
+         customer has anything to count. -->
+    <template id="portal_my_home_fm" name="FM Portal Cards" inherit_id="portal.portal_my_home" priority="40">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+            <t t-set="portal_service_category_enable" t-value="True"/>
+        </xpath>
+        <div id="portal_service_category" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/fm_portal/static/src/img/jobs.svg'"/>
+                <t t-set="title">Jobs</t>
+                <t t-set="url" t-value="'/my/jobs'"/>
+                <t t-set="text">Track your current and upcoming visits</t>
+                <t t-set="placeholder_count" t-value="'fm_job_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/fm_portal/static/src/img/certificate.svg'"/>
+                <t t-set="title">Certificates &amp; Reports</t>
+                <t t-set="url" t-value="'/my/fm-documents'"/>
+                <t t-set="text">Download compliance certificates and service reports</t>
+                <t t-set="placeholder_count" t-value="'fm_certificate_count'"/>
+            </t>
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/fm_portal/static/src/img/request.svg'"/>
+                <t t-set="title">Service Request</t>
+                <t t-set="url" t-value="'/my/service-request'"/>
+                <t t-set="text">Ask for a new service or an extra visit</t>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </div>
+    </template>
+
+    <template id="portal_breadcrumbs_fm" name="FM Portal Breadcrumbs" inherit_id="portal.portal_breadcrumbs" priority="40">
+        <xpath expr="//ol[hasclass('o_portal_submenu')]" position="inside">
+            <li t-if="page_name == 'fm_jobs'" class="breadcrumb-item active">Jobs</li>
+            <li t-if="page_name == 'fm_documents'" class="breadcrumb-item active">Certificates &amp; Reports</li>
+            <li t-if="page_name == 'fm_service_request'" class="breadcrumb-item active">Service Request</li>
+        </xpath>
+    </template>
+
+    <template id="portal_my_fm_jobs" name="My Jobs">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Jobs</t>
+            </t>
+            <p t-if="not jobs" class="alert alert-warning">There are no jobs to show here.</p>
+            <t t-if="jobs" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Job</th>
+                        <th class="d-none d-md-table-cell">Service</th>
+                        <th class="d-none d-xl-table-cell">Site</th>
+                        <th>Planned</th>
+                        <th class="d-none d-lg-table-cell">Technician</th>
+                        <th>Status</th>
+                        <th class="text-end">Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="jobs" t-as="job">
+                        <td><a t-att-href="job.get_portal_url()" t-out="job.name"/></td>
+                        <td class="d-none d-md-table-cell"><t t-out="job_service(job) or ''"/></td>
+                        <td class="d-none d-xl-table-cell"
+                            t-out="job.fm_location_id.display_name or job.fm_asset_id.display_name or job.partner_id.display_name or ''"/>
+                        <td><span t-if="job.planned_date_begin" t-field="job.planned_date_begin" t-options="{'widget': 'datetime', 'format': 'dd MMM yyyy HH:mm'}" class="text-nowrap"/></td>
+                        <td class="d-none d-lg-table-cell"><t t-out="', '.join(job.user_ids.mapped('name')) or ''"/></td>
+                        <td>
+                            <span t-if="job.state == '1_done'" class="badge rounded-pill text-bg-success" t-out="job.stage_id.name"/>
+                            <span t-elif="job.state == '1_canceled'" class="badge rounded-pill text-bg-secondary" t-out="job.stage_id.name"/>
+                            <span t-else="" class="badge rounded-pill text-bg-info" t-out="job.stage_id.name"/>
+                        </td>
+                        <td class="text-end">
+                            <a t-if="job.state == '1_done'" t-attf-href="/my/jobs/#{job.id}/report"
+                               title="Download the service report"><i class="fa fa-download"/></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <template id="portal_my_fm_documents" name="My Certificates and Reports">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Certificates &amp; Reports</t>
+            </t>
+
+            <h4 class="mt-2">Compliance Certificates</h4>
+            <p t-if="not certificates" class="alert alert-warning">No certificates have been issued for your sites yet.</p>
+            <t t-if="certificates" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Certificate</th>
+                        <th class="d-none d-md-table-cell">Number</th>
+                        <th>Issued</th>
+                        <th>Expires</th>
+                        <th>Status</th>
+                        <th class="text-end">Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="certificates" t-as="cert">
+                        <td><t t-out="cert.name or ''"/></td>
+                        <td class="d-none d-md-table-cell" t-out="cert.certificate_number or ''"/>
+                        <td><span t-field="cert.issue_date"/></td>
+                        <td><span t-field="cert.expiry_date"/></td>
+                        <td><span t-field="cert.state"/></td>
+                        <td class="text-end">
+                            <a t-attf-href="/my/fm-documents/certificate/#{cert.id}" title="Download"><i class="fa fa-download"/></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </t>
+
+            <h4 class="mt-4">Service Reports</h4>
+            <p t-if="not reports" class="alert alert-warning">Reports appear here once a visit is completed.</p>
+            <t t-if="reports" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th>Job</th>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th class="text-end">Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="reports" t-as="job">
+                        <td><a t-att-href="job.get_portal_url()" t-out="job.name"/></td>
+                        <td><t t-out="job_service(job) or ''"/></td>
+                        <td><span t-if="job.planned_date_begin" t-field="job.planned_date_begin" t-options="{'widget': 'date'}"/></td>
+                        <td class="text-end">
+                            <a t-attf-href="/my/jobs/#{job.id}/report" title="Download"><i class="fa fa-download"/></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </t>
+        </t>
+    </template>
+
+    <template id="portal_fm_service_request" name="Service Request">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Service Request</t>
+            </t>
+            <div t-if="submitted" class="alert alert-success">
+                <i class="fa fa-check-circle me-1"/>
+                Thank you — your request<t t-if="submitted_request"> <b t-out="submitted_request.name or ''"/></t>
+                has been received. Our team will contact you shortly.
+            </div>
+            <!-- Confirmation popup: shown on the page the form redirects to,
+                 fades out on its own (CSS), and the × closes it at once. -->
+            <div t-if="submitted" class="fm_request_toast toast show" role="alert"
+                 aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="fa fa-check-circle text-success me-2"/>
+                    <strong class="me-auto">Request submitted</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"/>
+                </div>
+                <div class="toast-body">
+                    Your service request
+                    <t t-if="submitted_request"><b t-out="submitted_request.name or ''"/></t>
+                    has been submitted successfully. Our team will contact you shortly.
+                </div>
+            </div>
+            <form action="/my/service-request" method="post" class="row g-3 mb-4">
+                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold" for="fm_service">Service *</label>
+                    <select id="fm_service" name="service" required="required"
+                            t-attf-class="form-select #{'is-invalid' if error.get('service') else ''}">
+                        <option value="">Choose a service…</option>
+                        <t t-foreach="services" t-as="service">
+                            <option t-att-value="service[0]" t-att-selected="post.get('service') == service[0]" t-out="service[1]"/>
+                        </t>
+                    </select>
+                    <div class="invalid-feedback"><t t-out="error.get('service') or ''"/></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold" for="fm_preferred_date">Preferred date</label>
+                    <input id="fm_preferred_date" type="date" name="preferred_date" class="form-control"
+                           t-att-value="post.get('preferred_date')"/>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold" for="fm_site">Site / Premises</label>
+                    <input id="fm_site" type="text" name="site" class="form-control"
+                           placeholder="Building, floor, unit"
+                           t-att-value="post.get('site') or partner.commercial_partner_id._display_address(without_company=True).replace('\n', ', ').strip(', ')"/>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold" for="fm_description">What do you need? *</label>
+                    <textarea id="fm_description" name="description" rows="4" required="required"
+                              t-attf-class="form-control #{'is-invalid' if error.get('description') else ''}"
+                              ><t t-out="post.get('description') or ''"/></textarea>
+                    <div class="invalid-feedback"><t t-out="error.get('description') or ''"/></div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+
+            <t t-if="my_requests">
+                <h4>Your recent requests</h4>
+                <t t-call="portal.portal_table">
+                    <thead>
+                        <tr class="active">
+                            <th>Request</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="my_requests" t-as="lead">
+                            <td><t t-out="lead.name or ''"/></td>
+                            <td><span t-field="lead.create_date" t-options="{'widget': 'date'}"/></td>
+                            <td t-out="lead.stage_id.name or ''"/>
+                        </tr>
+                    </tbody>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

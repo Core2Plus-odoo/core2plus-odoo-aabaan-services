@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Branch on the quotation / order in the Sales app, where contracts
+         are also written up. Same field the FM contract shows, reached
+         there through the fm.contract _inherits delegation. -->
+
+    <record id="view_order_form_branch" model="ir.ui.view">
+        <field name="name">sale.order.form.fm.branch</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="branch_id" options="{'no_create': True}"/>
+                <field name="fm_add_stamp" invisible="not branch_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The licence the delivering branch works under, beside the terms
+         it helps set.
+
+         Inherits fm_contract's FM Contract page rather than the native
+         sale order form, because fm_premises_type is fm_contract's field
+         and only its view puts it on the form. Two views inheriting the
+         same native form are applied in whatever order their ids fall,
+         so an xpath from here onto fm_contract's field is a coin toss
+         that fails the module load when it lands wrong.
+
+         Read-only on purpose: a licence belongs to the branch, and a
+         per-contract copy of it is a second number free to be wrong on a
+         signed agreement. -->
+    <record id="view_order_form_branch_licence" model="ir.ui.view">
+        <field name="name">sale.order.form.fm.branch.licence</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="fm_contract.view_order_form_fm_contract"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='fm_premises_type']" position="after">
+                <field name="fm_licence_number"
+                       invisible="not branch_id"
+                       placeholder="Set on the branch"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_list_branch" model="ir.ui.view">
+        <field name="name">sale.order.list.fm.branch</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="branch_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The Quotations list (sale.view_quotation_tree_with_onboarding) is
+         deliberately not extended: that xmlid is not used anywhere else in
+         this codebase, so it is unverified on this build, and a bad
+         inherit_id fails the whole upgrade. The three views below are all
+         proven in production. -->
+
+    <record id="view_sales_order_filter_branch" model="ir.ui.view">
+        <field name="name">sale.order.search.fm.branch</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_view_search_inherit_sale"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="branch_id"/>
+                <filter name="fm_group_branch" string="Branch"
+                        context="{'group_by': 'branch_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

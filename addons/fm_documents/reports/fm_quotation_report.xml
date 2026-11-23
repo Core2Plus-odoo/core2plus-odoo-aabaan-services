@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_fm_quotation" model="ir.actions.report">
+        <field name="name">Quotation</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fm_documents.report_fm_quotation_document</field>
+        <field name="report_file">fm_documents.report_fm_quotation_document</field>
+        <!-- Deliberately NOT bound into the Print menu: sale.order already
+             offers "Quotation / Order" there, and a second entry named
+             Quotation on every ordinary sale is worse than no entry. The
+             two buttons in views/sale_order_views.xml print these, gated
+             on is_fm_contract. The binding is cleared explicitly rather
+             than just dropped from this file, because an upgrade only
+             writes the fields it finds here. The old binding would
+             otherwise survive pointing at fm.contract, and its
+             ondelete=cascade would take this action down with that model. -->
+        <field name="binding_model_id" eval="False"/>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="print_report_name">'Quotation - %s' % (object.partner_id.name or object.name)</field>
+    </record>
+
+    <!-- Pre-contract Quotation — narrative scope/treatment/terms + pricing
+         table with VAT breakdown, mirroring the format historically used
+         (uploaded sample: greeting, Scope of Work, Covered Area, Treatment,
+         follow-up/complaint visit commitments, then pricing + payment terms).
+         Printable at any contract stage; typically used before activation.
+
+         NOTE for future editors: fm_branch.report_fm_quotation_branch inherits
+         this template via an xpath anchored on the h5 with text "Payment
+         Terms" below — keep that element and its exact text if you edit this
+         file, or fm_branch will fail to load on the next production upgrade
+         (see CLAUDE.md section 5 history / the 2026-07 hotfix). -->
+    <template id="report_fm_quotation_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-if="o.fm_quote_client_layout"><t t-call="fm_documents.report_fm_client_quotation_page"/></t>
+                <t t-else="">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:12.5px; line-height:1.55; color:#2b2b2b;">
+                        <style>
+                            /* Enlarge the standard Odoo letterhead logo on this report only. */
+                            .header img, .o_company_logo { max-height: 90px !important; max-width: 260px !important; width: auto !important; height: auto !important; }
+                        </style>
+                        <t t-set="aed" t-value="o.env['res.currency'].with_context(active_test=False).search([('name', '=', 'AED')], limit=1)"/>
+                        <div class="row mb-4">
+                            <div class="col-7">
+                                <h2 class="mb-0" style="color:#1C2B3A; font-size:24px; font-weight:700;">Quotation</h2>
+                                <div style="font-size:13px; color:#777;" dir="rtl">عرض سعر</div>
+                            </div>
+                            <div class="col-5">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <tr>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Ref#</td>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.fm_contract_number"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Date</td>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-if="o.fm_start_date" t-field="o.fm_start_date"/><span t-else="" t-field="o.create_date"/></td>
+                                    </tr>
+                                    <tr t-if="o.validity_date">
+                                        <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Valid Until</td>
+                                        <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.validity_date"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" style="border-left:4px solid #EE7A22; padding:6px 10px; background:#fafafa;">
+                            <strong t-esc="o.subject or ('Service Proposal — %s' % (o.partner_id.name or ''))"/>
+                        </div>
+
+                        <p>
+                            Dear <span t-esc="(o.fm_customer_contact_ids and o.fm_customer_contact_ids[0].name) or o.partner_id.name"/>,
+                        </p>
+                        <p t-if="o.quotation_intro_text or o.agreement_template_id.quotation_intro_text"
+                           t-esc="o._fm_render_agreement_text(o.quotation_intro_text or o.agreement_template_id.quotation_intro_text)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            With reference to the above subject and our site inspection, we are pleased to
+                            provide our best quotation for the services described below at
+                            <span t-esc="o.partner_id.name"/>.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Scope of Work</h5>
+                        <p t-if="o.scope_method_text or o.agreement_template_id.scope_method_text"
+                           t-esc="o._fm_render_agreement_text(o.scope_method_text or o.agreement_template_id.scope_method_text)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            Trained operators will inspect the premises prior to any service activity to
+                            assess requirements, then carry out the work using methods and materials
+                            approved by the relevant UAE municipal and environmental authorities.
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Covered Area</h5>
+                        <p t-if="o.scope_notes" t-esc="o._fm_render_agreement_text(o.scope_notes)" style="white-space:pre-wrap;"/>
+                        <ul t-elif="o.fm_service_inclusions">
+                            <li t-foreach="o.fm_service_inclusions" t-as="incl" t-esc="incl.name"/>
+                        </ul>
+                        <p t-else="" class="text-muted">Covered area to be confirmed following site inspection.</p>
+
+                        <p t-if="o.treatment_notes" style="white-space:pre-wrap;">
+                            <strong>Treatment / Method:</strong> <span t-esc="o._fm_render_agreement_text(o.treatment_notes)"/>
+                        </p>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Follow-up and Complaint Visits</h5>
+                        <p>
+                            Where an issue is reported during a routine visit, the team will conduct
+                            follow-up visits and take the necessary action until resolved.
+                            <t t-if="o.unscheduled_visits_included">
+                                Up to <span t-esc="o.unscheduled_visits_included"/> unscheduled visit(s) are
+                                included over the contract period at no additional charge.
+                            </t>
+                            In case of a complaint, the team will visit the site within
+                            <span t-esc="o.complaint_response_hours or 24"/> hours of the report.
+                        </p>
+
+                        <t t-foreach="o.agreement_line_ids" t-as="aline">
+                            <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">
+                                <span t-esc="aline.name"/>
+                            </h5>
+                            <p t-esc="o._fm_render_agreement_text(aline.body)" style="white-space:pre-wrap;"/>
+                        </t>
+
+                        <t t-set="priced_lines" t-value="o.order_line.filtered(lambda l: not l.display_type)"/>
+                        <table t-if="priced_lines" class="table table-sm mb-1" style="margin-top:14px; border-collapse:collapse; width:100%; font-size:12px;">
+                            <thead>
+                                <tr style="background:#1C2B3A; color:#fff;">
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700;">Description</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Qty</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Rate</th>
+                                    <th style="padding:6px 8px; border:1px solid #1C2B3A; font-weight:700; text-align:right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="priced_lines" t-as="line">
+                                    <td style="padding:6px 8px; border:1px solid #ddd;">
+                                        <span t-field="line.name"/>
+                                        <div class="text-muted" style="font-size:11px;">
+                                            Frequency:
+                                            <span t-if="o.visit_frequency == 'custom'">
+                                                Every <t t-esc="o.custom_interval_days or 30"/> days
+                                            </span>
+                                            <span t-elif="o.visit_frequency" t-field="o.visit_frequency"/>
+                                        </div>
+                                    </td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.product_uom_qty"/></td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_unit" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                    <td style="padding:6px 8px; border:1px solid #ddd; text-align:right;"><span t-field="line.price_subtotal" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p t-else="" class="text-muted" style="margin-top:14px; border:1px dashed #ccc; padding:8px 10px; font-size:11px;">
+                            No priced service lines yet — add products via "Edit Products (Sales Order)" on the contract.
+                        </p>
+                        <table t-if="priced_lines" style="width:45%; margin-left:auto; border-collapse:collapse;">
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #ddd;">Subtotal</td>
+                                <td style="padding:4px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.amount_untaxed" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding:4px 8px; border:1px solid #ddd;">VAT</td>
+                                <td style="padding:4px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.amount_tax" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                            </tr>
+                            <tr style="font-weight:bold; background:#fdf1e6;">
+                                <td style="padding:6px 8px; border:1px solid #EE7A22;">Grand Total</td>
+                                <td style="padding:6px 8px; border:1px solid #EE7A22; text-align:right;"><span t-field="o.fm_tcv" t-options='{"widget": "monetary", "display_currency": aed}'/></td>
+                            </tr>
+                        </table>
+
+                        <h5 style="color:#1C2B3A; font-size:14px; font-weight:700; border-bottom:1px solid #ddd; padding-bottom:4px; margin-top:20px; margin-bottom:8px;">Payment Terms</h5>
+                        <p t-if="o.payment_terms_note" t-esc="o._fm_render_agreement_text(o.payment_terms_note)" style="white-space:pre-wrap;"/>
+                        <p t-else="">
+                            <span t-field="o.payment_term_id"/>
+                        </p>
+                        <p class="text-muted" style="font-size:11px;">
+                            This quotation is subject to the full terms and conditions set out in the
+                            Service Agreement issued upon acceptance, including provisions on liability,
+                            confidentiality, compliance, and dispute resolution.
+                        </p>
+
+                        <div class="mt-5" style="page-break-inside: avoid; border:1px solid #ddd; padding:10px; width:45%;">
+                            <div style="color:#666;">MANAGER,</div>
+                            <div><strong t-field="o.company_id.name"/></div>
+                        </div>
+
+                        <div class="text-muted mt-4" style="font-size:11px; border-top:1px solid #ddd; padding-top:6px;">
+                            TRN: <span t-field="o.company_id.vat"/> · All amounts in AED unless stated. This
+                            quotation is not a tax invoice.
+                        </div>
+                    </div>
+                </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

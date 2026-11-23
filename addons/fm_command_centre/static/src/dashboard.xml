@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="fm_command_centre.SectionHead">
+        <div class="o_cc_brandbar">
+            <img t-att-src="'/web/image/res.company/' + d.company_id + '/logo'" alt="" class="o_cc_logo_sm"/>
+            <span class="o_cc_eyebrow">CEO DASHBOARD</span>
+        </div>
+        <div class="o_cc_head">
+            <span class="o_cc_num" t-esc="n"/>
+            <h2 t-esc="title"/>
+        </div>
+        <p class="o_cc_sub" t-esc="sub"/>
+    </t>
+
+    <t t-name="fm_command_centre.Footer">
+        <div class="o_cc_footer">
+            <span t-esc="d.tagline"/>
+            <span>CEO Dashboard · <t t-esc="page"/> / <t t-esc="compact ? 9 : 11"/></span>
+        </div>
+    </t>
+
+    <t t-name="fm_command_centre.Dashboard">
+        <div class="o_cc_root">
+            <!-- toolbar -->
+            <div class="o_cc_toolbar d-print-none">
+                <div class="o_cc_month">
+                    <button class="btn btn-light" t-on-click="() => this.shiftMonth(-1)" title="Previous month">‹</button>
+                    <input type="month" class="form-control" t-att-value="state.month or ''" t-on-change="onMonthInput"/>
+                    <button class="btn btn-light" t-on-click="() => this.shiftMonth(1)" title="Next month">›</button>
+                </div>
+                <label class="o_cc_switch">
+                    <input type="checkbox" t-att-checked="state.includeDraft" t-on-change="toggleDraft"/>
+                    <span>Include draft invoices</span>
+                    <small t-if="state.data and state.data.draft_count" class="text-muted">
+                        (<t t-esc="state.data.draft_count"/> this month)
+                    </small>
+                </label>
+                <select class="form-select o_cc_service" t-on-change="onServiceChange">
+                    <option value="" t-att-selected="!state.service">All services</option>
+                    <t t-if="state.data">
+                        <option t-foreach="state.data.service_options" t-as="so" t-key="so.key"
+                                t-att-value="so.key" t-att-selected="state.service === so.key" t-esc="so.label"/>
+                    </t>
+                </select>
+                <select class="form-select o_cc_service" t-on-change="onBranchChange">
+                    <option value="" t-att-selected="!state.branch">All branches</option>
+                    <t t-if="state.data">
+                        <option t-foreach="state.data.branch_options" t-as="bo" t-key="bo.id"
+                                t-att-value="bo.id" t-att-selected="state.branch === bo.id" t-esc="bo.name"/>
+                    </t>
+                </select>
+                <div class="o_cc_break"/>
+                <div class="o_cc_sections" role="tablist">
+                    <button t-att-class="'o_cc_sec' + (state.section === 'all' ? ' active' : '')"
+                            t-on-click="() => this.selectSection('all')">All</button>
+                    <t t-foreach="sectionList" t-as="sec" t-key="sec.key">
+                        <button t-att-class="'o_cc_sec' + (state.section === sec.key ? ' active' : '')"
+                                t-att-title="sec.label"
+                                t-on-click="() => this.selectSection(sec.key)">
+                            <span class="o_cc_sec_num" t-esc="sec.num"/> <t t-esc="sec.label"/>
+                        </button>
+                    </t>
+                </div>
+                <div class="o_cc_tools">
+                    <span t-if="state.loading" class="o_cc_loading"><i class="fa fa-circle-o-notch fa-spin"/> Loading…</span>
+                    <span t-elif="state.data" class="text-muted small">Updated <t t-esc="state.data.generated"/></span>
+                    <button class="btn btn-light" t-on-click="() => this.load()" title="Refresh"><i class="fa fa-refresh"/></button>
+                    <button class="btn btn-primary" t-on-click="print"><i class="fa fa-print"/> Print / PDF</button>
+                </div>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger m-3" t-esc="state.error"/>
+
+            <div t-if="state.data" class="o_cc_pages" t-att-class="{'o_cc_busy': state.loading, 'o_cc_single': state.section !== 'all'}">
+                <t t-set="d" t-value="state.data"/>
+                <t t-set="compact" t-value="isCompact"/>
+
+                <!-- ============ COVER ============ -->
+                <section class="o_cc_page o_cc_cover">
+                  <div class="o_cc_cover_left">
+                    <img t-att-src="'/web/image/res.company/' + d.company_id + '/logo'" alt="" class="o_cc_logo"/>
+                    <div class="o_cc_pill">CEO DASHBOARD</div>
+                    <h1>Two Businesses, <span>One View</span></h1>
+                    <p class="o_cc_lead">AMC contracts and cash sales tracked side by side: revenue, targets, collections and cash, for every branch.</p>
+                    <div class="o_cc_chips">
+                        <span>📅 <t t-esc="d.month_label"/></span>
+                        <span t-if="d.service" class="o_cc_chip_service">🧰 <t t-esc="d.service_label"/></span>
+                        <span t-if="d.branch" class="o_cc_chip_service">🏢 <t t-esc="d.branch_label"/> branch</span>
+                        <span>📍 <t t-esc="d.branch_count"/> branch<t t-if="d.branch_count !== 1">es</t></span>
+                        <span>👥 <t t-esc="d.team"/> team members</span>
+                        <span class="o_cc_chip_odoo">🟣 Source: Odoo</span>
+                    </div>
+                  </div>
+                  <div class="o_cc_cover_right">
+                    <div class="o_cc_hero" t-on-click="() => this.open(d.cover.drill_revenue)">
+                        <div class="o_cc_hero_top">
+                            <div>
+                                <div class="o_cc_hero_label">TOTAL REVENUE</div>
+                                <div class="o_cc_hero_value">AED <t t-esc="k(d.cover.total)"/></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="o_cc_hero_target">Target <t t-if="d.cover.target">AED <t t-esc="k(d.cover.target)"/></t><t t-else="">not set</t></div>
+                                <div class="o_cc_hero_ach" t-if="d.cover.achieved !== null"><t t-esc="pct(d.cover.achieved, 1)"/> achieved</div>
+                            </div>
+                        </div>
+                        <div class="o_cc_split">
+                            <div class="o_cc_split_amc" t-att-style="'flex:' + Math.max(d.cover.amc, 0.0001)">🔁 AMC · AED <t t-esc="k(d.cover.amc)"/> · <t t-esc="pct(d.cover.amc_share)"/></div>
+                            <div class="o_cc_split_cash" t-att-style="'flex:' + Math.max(d.cover.cash, 0.0001)">💵 Cash · AED <t t-esc="k(d.cover.cash)"/> · <t t-esc="pct(d.cover.cash_share)"/></div>
+                        </div>
+                    </div>
+
+                    <div class="o_cc_tiles4">
+                        <div class="o_cc_tile">
+                            <b t-esc="num(d.cover.jobs)"/>
+                            <span>jobs completed</span>
+                            <small><t t-esc="num(d.cover.amc_visits)"/> AMC visits · <t t-esc="num(d.cover.cash_jobs)"/> cash jobs</small>
+                        </div>
+                        <div class="o_cc_tile">
+                            <b t-esc="num(d.cover.new_clients)"/>
+                            <span>new clients</span>
+                            <small><t t-if="d.cover.new_clients_delta !== null"><t t-esc="delta(d.cover.new_clients_delta)"/> vs <t t-esc="d.prev_month_label"/></t><t t-else="">first-time customers</t></small>
+                        </div>
+                        <div class="o_cc_tile" t-on-click="() => this.open(d.credit.drill_total)">
+                            <b t-esc="k(d.cover.receivables)"/>
+                            <span>receivables</span>
+                            <small>AED <t t-esc="k(d.cover.overdue)"/> overdue</small>
+                        </div>
+                        <div class="o_cc_tile">
+                            <b t-esc="pct(d.cover.margin, 1)"/>
+                            <span>net margin</span>
+                            <small t-if="d.cover.profit !== null">AED <t t-esc="k(d.cover.profit)"/> profit</small><small t-else="">no expenses booked</small>
+                        </div>
+                    </div>
+
+                    <div class="o_cc_index">
+                        <div class="o_cc_index_title">📑 Inside</div>
+                        <div class="o_cc_index_grid">
+                            <span>1 · AMC vs Cash</span><span>2 · AMC Department</span><span>3 · Cash Sales</span><span>4 · Branch Scorecard</span>
+                            <t t-if="compact">
+                                <span>5 · Credit Recovery</span><span>6 · Sales Team</span><span>7 · Expenses</span><span>8 · Cash &amp; Bank</span>
+                            </t>
+                            <t t-else="">
+                                <span>5 · Revenue by Service</span><span>6 · Services by Emirate</span><span>7 · Credit Recovery</span><span>8 · Sales Team</span>
+                                <span>9 · Expenses</span><span>10 · Cash &amp; Bank</span>
+                            </t>
+                        </div>
+                    </div>
+                  </div>
+                    <p class="o_cc_fine">
+                        Live data from Odoo · <t t-esc="d.company"/> · as of <t t-esc="d.as_of"/>
+                        <t t-if="d.include_draft"> · includes draft invoices</t><t t-else=""> · posted invoices only</t>
+                    </p>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="1"/></t>
+                </section>
+
+                <!-- ============ 1 · AMC vs CASH ============ -->
+                <section class="o_cc_page" t-if="showSection('versus')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="1"/><t t-set="title" t-value="'AMC vs Cash Sales'"/>
+                        <t t-set="sub" t-value="'Recurring contract income and one-time job income, never mixed.'"/>
+                    </t>
+                    <div class="o_cc_two">
+                        <div class="o_cc_stream o_cc_stream_amc">
+                            <div class="o_cc_stream_title">🔁 AMC</div>
+                            <div class="o_cc_stream_value">AED <t t-esc="k(d.versus.amc.revenue)"/></div>
+                            <div class="o_cc_stream_meta"><t t-esc="pct(d.versus.amc.share)"/> of revenue · target <t t-if="d.versus.amc.target">AED <t t-esc="k(d.versus.amc.target)"/> · <b t-att-class="ach(d.versus.amc.achieved)" t-esc="pct(d.versus.amc.achieved)"/></t><t t-else="">not set</t></div>
+                            <div class="o_cc_progress"><div t-att-style="'width:' + width(d.versus.amc.revenue, Math.max(d.versus.amc.target, d.versus.amc.revenue)) + '%'"/></div>
+                            <div class="o_cc_kv" t-on-click="() => this.open(d.amc.drill_visits)"><span>AMC visits done</span><b><t t-esc="num(d.versus.amc.visits_done)"/> <small class="text-muted">of <t t-esc="num(d.versus.amc.visits_planned)"/> planned</small></b></div>
+                            <div class="o_cc_kv"><span>Revenue per visit</span><b t-esc="amt(d.versus.amc.per_visit)"/></div>
+                            <div class="o_cc_kv" t-on-click="() => this.open(d.credit.drill_amc)"><span>Receivables</span><b>AED <t t-esc="k(d.versus.amc.receivable)"/></b></div>
+                        </div>
+                        <div class="o_cc_stream o_cc_stream_cash">
+                            <div class="o_cc_stream_title">💵 Cash Sales</div>
+                            <div class="o_cc_stream_value">AED <t t-esc="k(d.versus.cash.revenue)"/></div>
+                            <div class="o_cc_stream_meta"><t t-esc="pct(d.versus.cash.share)"/> of revenue · target <t t-if="d.versus.cash.target">AED <t t-esc="k(d.versus.cash.target)"/> · <b t-att-class="ach(d.versus.cash.achieved)" t-esc="pct(d.versus.cash.achieved)"/></t><t t-else="">not set</t></div>
+                            <div class="o_cc_progress"><div t-att-style="'width:' + width(d.versus.cash.revenue, Math.max(d.versus.cash.target, d.versus.cash.revenue)) + '%'"/></div>
+                            <div class="o_cc_kv" t-on-click="() => this.open(d.cash.drill_jobs)"><span>Cash jobs done</span><b t-esc="num(d.versus.cash.jobs)"/></div>
+                            <div class="o_cc_kv"><span>Average job value</span><b t-esc="amt(d.versus.cash.avg_job)"/></div>
+                            <div class="o_cc_kv" t-on-click="() => this.open(d.credit.drill_cash)"><span>Receivables</span><b>AED <t t-esc="k(d.versus.cash.receivable)"/></b></div>
+                        </div>
+                    </div>
+
+                    <h3 class="o_cc_h3">📈 Monthly revenue, last 12 months</h3>
+                    <div class="o_cc_legend"><span class="o_cc_lg_amc">🔁 AMC (contracts)</span><span class="o_cc_lg_cash">💵 Cash Sales (one-time jobs)</span></div>
+                    <t t-set="lc" t-value="lineChart()"/>
+                    <svg class="o_cc_svg" t-att-viewBox="'0 0 ' + lc.W + ' ' + lc.H" preserveAspectRatio="xMidYMid meet">
+                        <text x="54" y="12" class="o_cc_axis">AED</text>
+                        <t t-foreach="lc.ticks" t-as="t" t-key="t_index">
+                            <line t-att-x1="lc.L" t-att-x2="lc.right" t-att-y1="t.y" t-att-y2="t.y" class="o_cc_grid"/>
+                            <text t-att-x="lc.L - 8" t-att-y="t.y + 4" text-anchor="end" class="o_cc_axis" t-esc="t.label"/>
+                        </t>
+                        <t t-foreach="lc.labels" t-as="m" t-key="m_index">
+                            <text t-att-x="m.x" t-att-y="lc.H - 8" text-anchor="middle" t-att-class="m.last ? 'o_cc_axis o_cc_axis_b' : 'o_cc_axis'" t-esc="m.label"/>
+                        </t>
+                        <path t-att-d="lc.amcPath" class="o_cc_line_amc"/>
+                        <path t-att-d="lc.cashPath" class="o_cc_line_cash"/>
+                        <circle t-att-cx="lc.amcDot.x" t-att-cy="lc.amcDot.y" r="5" class="o_cc_dot_amc"/>
+                        <circle t-att-cx="lc.cashDot.x" t-att-cy="lc.cashDot.y" r="5" class="o_cc_dot_cash"/>
+                        <text t-att-x="lc.right + 12" t-att-y="lc.amcLabelY" class="o_cc_endlabel">🔁 AMC</text>
+                        <text t-att-x="lc.right + 12" t-att-y="lc.amcLabelY + 15" class="o_cc_axis" t-esc="lc.amcLast"/>
+                        <text t-att-x="lc.right + 12" t-att-y="lc.cashLabelY" class="o_cc_endlabel">💵 Cash</text>
+                        <text t-att-x="lc.right + 12" t-att-y="lc.cashLabelY + 15" class="o_cc_axis" t-esc="lc.cashLast"/>
+                    </svg>
+                    <div class="o_cc_note o_cc_note_green" t-if="d.versus.notes.length">
+                        💡 <t t-foreach="d.versus.notes" t-as="nt" t-key="nt_index"><b t-esc="nt[0]"/> <t t-esc="nt[1]"/><t t-if="!nt_last">. </t></t>.
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="2"/></t>
+                </section>
+
+                <!-- ============ 2 · AMC DEPARTMENT ============ -->
+                <section class="o_cc_page" t-if="showSection('amc')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="2"/><t t-set="title" t-value="'AMC Department'"/>
+                        <t t-set="sub" t-value="'Contracts, renewals and recurring revenue.'"/>
+                    </t>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_blue" t-on-click="() => this.open(d.amc.drill_active)"><b t-esc="num(d.amc.active)"/><span>active AMC contracts</span></div>
+                        <div class="o_cc_kpi o_cc_bg_teal" t-on-click="() => this.open(d.amc.drill_new)"><b t-esc="num(d.amc.new)"/><span>new contracts in <t t-esc="d.month_label.split(' ')[0].slice(0,3)"/></span></div>
+                        <div class="o_cc_kpi o_cc_bg_blue" t-on-click="() => this.open(d.amc.drill_renewals)"><b t-esc="num(d.amc.renewals)"/><span>renewals in <t t-esc="d.month_label.split(' ')[0].slice(0,3)"/></span></div>
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.amc.drill_due)"><b t-esc="num(d.amc.due60)"/><span>due in next 60 days</span><small>AED <t t-esc="k(d.amc.due60_value)"/> at stake</small></div>
+                    </div>
+                    <div class="o_cc_kpis o_cc_kpis_value">
+                        <div class="o_cc_kpi o_cc_val o_cc_val_blue" t-on-click="() => this.open(d.amc.drill_active)"><b>AED <t t-esc="k(d.amc.active_value)"/></b><span>active contracts value</span></div>
+                        <div class="o_cc_kpi o_cc_val o_cc_val_teal" t-on-click="() => this.open(d.amc.drill_new)"><b>AED <t t-esc="k(d.amc.new_value)"/></b><span>new contracts value</span></div>
+                        <div class="o_cc_kpi o_cc_val o_cc_val_blue" t-on-click="() => this.open(d.amc.drill_renewals)"><b>AED <t t-esc="k(d.amc.renewals_value)"/></b><span>renewals value</span></div>
+                        <div class="o_cc_kpi o_cc_val o_cc_val_navy" t-on-click="() => this.open(d.amc.drill_due)"><b>AED <t t-esc="k(d.amc.due60_value)"/></b><span>value due in 60 days</span></div>
+                    </div>
+                    <h3 class="o_cc_h3">🔁 New contracts vs renewals</h3>
+                    <div class="o_cc_legend"><span class="o_cc_lg_teal">New contracts</span><span class="o_cc_lg_amc">Renewals</span></div>
+                    <t t-set="cc" t-value="columnChart()"/>
+                    <svg class="o_cc_svg" t-att-viewBox="'0 0 ' + cc.W + ' ' + cc.H" preserveAspectRatio="xMidYMid meet">
+                        <t t-foreach="cc.ticks" t-as="t" t-key="t_index">
+                            <line t-att-x1="cc.L" t-att-x2="cc.right" t-att-y1="t.y" t-att-y2="t.y" class="o_cc_grid"/>
+                            <text t-att-x="cc.L - 8" t-att-y="t.y + 4" text-anchor="end" class="o_cc_axis" t-esc="t.label"/>
+                        </t>
+                        <t t-foreach="cc.bars" t-as="b" t-key="b_index">
+                            <rect t-att-x="b.nx" t-att-y="b.ny" t-att-width="cc.bw" t-att-height="b.nh" rx="3" class="o_cc_bar_teal"/>
+                            <rect t-att-x="b.rx" t-att-y="b.ry" t-att-width="cc.bw" t-att-height="b.rh" rx="3" class="o_cc_bar_amc"/>
+                            <t t-if="b.last">
+                                <text t-att-x="b.nx + cc.bw / 2" t-att-y="b.ny - 5" text-anchor="middle" class="o_cc_axis o_cc_axis_b" t-esc="b.n"/>
+                                <text t-att-x="b.rx + cc.bw / 2" t-att-y="b.ry - 5" text-anchor="middle" class="o_cc_axis o_cc_axis_b" t-esc="b.r"/>
+                            </t>
+                            <text t-att-x="b.cx" t-att-y="cc.H - 8" text-anchor="middle" t-att-class="b.last ? 'o_cc_axis o_cc_axis_b' : 'o_cc_axis'" t-esc="b.label"/>
+                        </t>
+                    </svg>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th>AMC Revenue</th><th>Target</th><th>Achv</th><th>Active</th><th>Visits</th><th>Due 60 D</th><th>Receivable</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.amc.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.name"/>
+                                <td t-esc="k(r.revenue)"/>
+                                <td t-esc="r.target ? k(r.target) : '—'"/>
+                                <td><b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></td>
+                                <td t-esc="num(r.active)"/>
+                                <td class="text-nowrap" t-esc="num(r.visits_done) + ' / ' + num(r.visits_planned)"/>
+                                <td t-esc="num(r.due60)"/>
+                                <td t-esc="k(r.receivable)"/>
+                            </tr>
+                        </tbody>
+                        <tfoot><tr>
+                            <td>Total</td><td t-esc="k(d.amc.totals.revenue)"/><td t-esc="d.amc.totals.target ? k(d.amc.totals.target) : '—'"/>
+                            <td><b t-att-class="ach(d.amc.totals.achieved)" t-esc="pct(d.amc.totals.achieved)"/></td>
+                            <td t-esc="num(d.amc.totals.active)"/><td class="text-nowrap" t-esc="num(d.amc.totals.visits_done) + ' / ' + num(d.amc.totals.visits_planned)"/>
+                            <td t-esc="num(d.amc.totals.due60)"/><td t-esc="k(d.amc.totals.receivable)"/>
+                        </tr></tfoot>
+                    </table>
+                    <p class="o_cc_tablenote">Visits = done / planned this month.</p>
+                    <div class="o_cc_note o_cc_note_orange" t-if="d.amc.note">
+                        ⏰ <b><t t-esc="d.amc.note.count"/> contracts expire in the next 60 days.</b> Sales starts every renewal 60 days early; <t t-esc="d.amc.note.branch"/> has the most (<t t-esc="d.amc.note.branch_count"/>).
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="3"/></t>
+                </section>
+
+                <!-- ============ 3 · CASH SALES ============ -->
+                <section class="o_cc_page" t-if="showSection('cash')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="3"/><t t-set="title" t-value="'Cash Sales Department'"/>
+                        <t t-set="sub" t-value="'One-time jobs: cash in, receipted and banked the same day.'"/>
+                    </t>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_orange" t-on-click="() => this.open(d.cash.drill_jobs)"><b t-esc="k(d.cash.revenue)"/><span>cash sales revenue</span></div>
+                        <div class="o_cc_kpi o_cc_bg_orange" t-on-click="() => this.open(d.cash.drill_jobs)"><b t-esc="num(d.cash.jobs)"/><span>cash jobs done</span></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="amt(d.cash.avg_job)"/><span>average job value</span></div>
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.cash.drill_payments)"><b t-esc="pct(d.cash.same_day_pct)"/><span>paid same day</span><small><t t-esc="num(d.cash.same_day)"/> of <t t-esc="num(d.cash.jobs)"/> jobs</small></div>
+                    </div>
+                    <h3 class="o_cc_h3">💳 How cash-sale clients paid</h3>
+                    <div class="o_cc_hbars" t-if="d.cash.payment_total">
+                        <div class="o_cc_hbar" t-foreach="d.cash.payment_modes" t-as="pm" t-key="pm.key">
+                            <span class="o_cc_hbar_label"><t t-esc="pm.key === 'cash' ? '💵' : pm.key === 'card' ? '💳' : '🏦'"/> <t t-esc="pm.label"/></span>
+                            <div class="o_cc_hbar_track">
+                                <div class="o_cc_hbar_fill o_cc_fill_orange" t-att-style="'width:' + width(pm.amount, maxOf(d.cash.payment_modes, 'amount')) + '%'"/>
+                                <span class="o_cc_hbar_val">AED <t t-esc="k(pm.amount)"/> · <t t-esc="pct(pm.share)"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="o_cc_empty" t-if="!d.cash.payment_total">No customer payments have been registered against cash-sale invoices this month.</p>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th>Cash Revenue</th><th>Target</th><th>Achv</th><th>Jobs</th><th>Avg Job</th><th>Unpaid</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.cash.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.name"/>
+                                <td t-esc="k(r.revenue)"/>
+                                <td t-esc="r.target ? k(r.target) : '—'"/>
+                                <td><b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></td>
+                                <td t-esc="num(r.jobs)"/>
+                                <td t-esc="amt(r.avg_job)"/>
+                                <td t-esc="k(r.unpaid)"/>
+                            </tr>
+                        </tbody>
+                        <tfoot><tr>
+                            <td>Total</td><td t-esc="k(d.cash.totals.revenue)"/><td t-esc="d.cash.totals.target ? k(d.cash.totals.target) : '—'"/>
+                            <td><b t-att-class="ach(d.cash.totals.achieved)" t-esc="pct(d.cash.totals.achieved)"/></td>
+                            <td t-esc="num(d.cash.totals.jobs)"/><td t-esc="amt(d.cash.totals.avg_job)"/><td t-esc="k(d.cash.totals.unpaid)"/>
+                        </tr></tfoot>
+                    </table>
+                    <h3 class="o_cc_h3">🛡️ Cash control checks (Accounts SOP)</h3>
+                    <div class="o_cc_checks">
+                        <div t-att-class="'o_cc_check ' + (d.cash.checks.receipts === d.cash.checks.jobs and d.cash.checks.jobs ? 'o_cc_check_ok' : 'o_cc_check_warn')">
+                            <b><t t-esc="d.cash.checks.receipts === d.cash.checks.jobs and d.cash.checks.jobs ? '✓' : '●'"/> Receipt for every payment</b>
+                            <span><t t-esc="num(d.cash.checks.receipts)"/> of <t t-esc="num(d.cash.checks.jobs)"/> jobs</span>
+                        </div>
+                        <div t-att-class="'o_cc_check ' + (d.cash.checks.days and d.cash.checks.days_matched === d.cash.checks.days ? 'o_cc_check_ok' : 'o_cc_check_warn')">
+                            <b><t t-esc="d.cash.checks.days and d.cash.checks.days_matched === d.cash.checks.days ? '✓' : '●'"/> Daily cash match</b>
+                            <span t-if="d.cash.checks.days"><t t-esc="d.cash.checks.days_matched"/> of <t t-esc="d.cash.checks.days"/> days matched</span>
+                            <span t-else="">No cash statements this month</span>
+                        </div>
+                        <div t-att-class="'o_cc_check ' + (d.cash.checks.difference_count ? 'o_cc_check_warn' : 'o_cc_check_ok')">
+                            <b><t t-if="d.cash.checks.difference_count">● <t t-esc="d.cash.checks.difference_count"/> difference<t t-if="d.cash.checks.difference_count > 1">s</t> to CEO</t><t t-else="">✓ No cash differences</t></b>
+                            <span t-foreach="d.cash.checks.differences" t-as="df" t-key="df_index">AED <t t-esc="num(df.amount)"/>, <t t-esc="df.journal"/>, <t t-esc="df.date"/></span>
+                        </div>
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="4"/></t>
+                </section>
+
+                <!-- ============ 4 · BRANCH SCORECARD ============ -->
+                <section class="o_cc_page" t-if="showSection('scorecard')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="4"/><t t-set="title" t-value="'Branch Scorecard'"/>
+                        <t t-set="sub" t-value="'Every branch, both streams, against target.'"/>
+                    </t>
+                    <h3 class="o_cc_h3">🏙️ Revenue by branch (AED) · dashed line = branch target</h3>
+                    <div class="o_cc_legend"><span class="o_cc_lg_amc">🔁 AMC (contracts)</span><span class="o_cc_lg_cash">💵 Cash Sales (one-time jobs)</span></div>
+                    <div class="o_cc_stack">
+                        <div class="o_cc_stack_row" t-foreach="d.scorecard.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                            <span class="o_cc_stack_label" t-esc="r.name"/>
+                            <div class="o_cc_stack_track">
+                                <div t-if="r.amc &gt; 0" class="o_cc_seg o_cc_seg_amc" t-att-style="'width:' + width(r.amc, d.scorecard.max_bar * 1.12) + '%'"><t t-if="r.amc" t-esc="k(r.amc)"/></div>
+                                <div t-if="r.cash &gt; 0" class="o_cc_seg o_cc_seg_cash" t-att-style="'width:' + width(r.cash, d.scorecard.max_bar * 1.12) + '%'"><t t-if="r.cash" t-esc="k(r.cash)"/></div>
+                                <div t-if="r.target" class="o_cc_target" t-att-style="'left:' + width(r.target, d.scorecard.max_bar * 1.12) + '%'"/>
+                                <span t-if="r.achieved !== null" t-att-class="'o_cc_stack_pct ' + ach(r.achieved)" t-att-style="'left:calc(' + width(Math.max(r.total, r.target), d.scorecard.max_bar * 1.12) + '% + 10px)'" t-esc="pct(r.achieved)"/>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th>🔁 AMC</th><th>💵 Cash</th><th>Total</th><th>New Clients</th><th>Receivable</th><th>Overdue</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.scorecard.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                                <td><div class="o_cc_strong" t-esc="r.name"/><small class="text-muted" t-esc="r.manager"/></td>
+                                <td><t t-esc="k(r.amc)"/> <b t-att-class="ach(r.amc_achieved)" t-if="r.amc_achieved !== null" t-esc="pct(r.amc_achieved)"/></td>
+                                <td><t t-esc="k(r.cash)"/> <b t-att-class="ach(r.cash_achieved)" t-if="r.cash_achieved !== null" t-esc="pct(r.cash_achieved)"/></td>
+                                <td class="o_cc_strong"><t t-esc="k(r.total)"/> <b t-att-class="ach(r.achieved)" t-if="r.achieved !== null" t-esc="pct(r.achieved)"/></td>
+                                <td t-esc="num(r.new_clients)"/>
+                                <td t-esc="k(r.receivable)"/>
+                                <td><b t-att-class="d.scorecard.late and d.scorecard.late.id === r.id ? 'o_cc_bad' : ''" t-esc="k(r.overdue)"/></td>
+                            </tr>
+                        </tbody>
+                        <tfoot><tr>
+                            <td>Total</td>
+                            <td><t t-esc="k(d.scorecard.totals.amc)"/> <b t-att-class="ach(d.scorecard.totals.amc_achieved)" t-if="d.scorecard.totals.amc_achieved !== null" t-esc="pct(d.scorecard.totals.amc_achieved)"/></td>
+                            <td><t t-esc="k(d.scorecard.totals.cash)"/> <b t-att-class="ach(d.scorecard.totals.cash_achieved)" t-if="d.scorecard.totals.cash_achieved !== null" t-esc="pct(d.scorecard.totals.cash_achieved)"/></td>
+                            <td><t t-esc="k(d.scorecard.totals.total)"/> <b t-att-class="ach(d.scorecard.totals.achieved)" t-if="d.scorecard.totals.achieved !== null" t-esc="pct(d.scorecard.totals.achieved)"/></td>
+                            <td t-esc="num(d.scorecard.totals.new_clients)"/><td t-esc="k(d.scorecard.totals.receivable)"/><td t-esc="k(d.scorecard.totals.overdue)"/>
+                        </tr></tfoot>
+                    </table>
+                    <p class="o_cc_tablenote">Overdue = unpaid invoices more than 60 days old (Accounts SOP: 61–90 days cash only, 90+ CEO action).</p>
+                    <div class="o_cc_two">
+                        <div class="o_cc_note o_cc_note_green">
+                            <t t-if="d.scorecard.best">🏆 <b><t t-esc="d.scorecard.best.name"/> beat target on both streams</b>: AMC <t t-esc="pct(d.scorecard.best.amc_achieved)"/>, Cash <t t-esc="pct(d.scorecard.best.cash_achieved)"/>.</t>
+                            <t t-elif="d.scorecard.top">🏆 <b><t t-esc="d.scorecard.top.name"/> is the biggest branch</b> this month at AED <t t-esc="k(d.scorecard.top.total)"/><t t-if="d.scorecard.top.achieved !== null"> (<t t-esc="pct(d.scorecard.top.achieved)"/> of target)</t>.</t>
+                            <t t-else="">🏆 No branch revenue recorded this month.</t>
+                        </div>
+                        <div class="o_cc_note o_cc_note_red">
+                            <t t-if="d.scorecard.worst">⚠️ <b><t t-esc="d.scorecard.worst.name"/> is below on both</b> and holds AED <t t-esc="k(d.scorecard.worst.overdue)"/> overdue.</t>
+                            <t t-elif="d.scorecard.late">⚠️ <b><t t-esc="d.scorecard.late.name"/> holds the most overdue</b>: AED <t t-esc="k(d.scorecard.late.overdue)"/>, the highest of any branch.</t>
+                            <t t-else="">⚠️ No overdue receivables over 60 days.</t>
+                        </div>
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="5"/></t>
+                </section>
+
+                <t t-if="!compact">
+                <!-- ============ 5 · REVENUE BY SERVICE ============ -->
+                <section class="o_cc_page" t-if="showSection('services')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="5"/><t t-set="title" t-value="'Revenue by Service'"/>
+                        <t t-set="sub" t-value="'All ' + d.services.rows.length + ' services, each split into AMC and cash sales (AED \'000).'"/>
+                    </t>
+                    <div class="o_cc_legend"><span class="o_cc_lg_amc">🔁 AMC (contracts)</span><span class="o_cc_lg_cash">💵 Cash Sales (one-time jobs)</span></div>
+                    <div class="o_cc_svc">
+                        <div class="o_cc_svc_row" t-foreach="d.services.rows" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                            <span class="o_cc_svc_label"><t t-esc="icon(r.key)"/> <t t-esc="r.label"/></span>
+                            <div class="o_cc_svc_track">
+                                <div t-if="r.amc &gt; 0" class="o_cc_seg o_cc_seg_amc" t-att-style="'width:' + width(r.amc, d.services.max * 1.5) + '%'"><t t-if="r.amc / d.services.max > 0.09" t-esc="(r.amc / 1000).toFixed(1)"/></div>
+                                <div t-if="r.cash &gt; 0" class="o_cc_seg o_cc_seg_cash" t-att-style="'width:' + width(r.cash, d.services.max * 1.5) + '%'"><t t-if="r.cash / d.services.max > 0.09" t-esc="(r.cash / 1000).toFixed(1)"/></div>
+                                <span class="o_cc_svc_val"><b><t t-esc="k(r.total)"/></b> · <t t-esc="pct(r.share, 1)"/> · AMC <t t-esc="pct(r.amc_share)"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="o_cc_empty" t-if="!d.services.rows.length">No invoiced services this month.</p>
+                    <div class="o_cc_two" t-if="d.services.notes.top">
+                        <div class="o_cc_note o_cc_note_green">
+                            🐞 <b><t t-esc="d.services.notes.top.names.join(', ')"/> bring <t t-esc="pct(d.services.notes.top.share)"/> of revenue</b>, and most of it is <t t-esc="d.services.notes.top.mostly_amc ? 'AMC' : 'cash sales'"/>.
+                        </div>
+                        <div class="o_cc_note o_cc_note_orange">
+                            <t t-if="d.services.notes.cashy.length">🧽 <b><t t-esc="d.services.notes.cashy.join(', ')"/> are almost all cash sales</b>: good targets to convert into AMCs.</t>
+                            <t t-else="">🧽 Every service carries a meaningful AMC share this month.</t>
+                        </div>
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="6"/></t>
+                </section>
+
+                <!-- ============ 6 · SERVICES BY EMIRATE ============ -->
+                <section class="o_cc_page" t-if="showSection('emirate')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="6"/><t t-set="title" t-value="'Services by Emirate'"/>
+                        <t t-set="sub" t-value="'What each branch sells and earns · bar under each figure = AMC (blue) vs cash (orange) share.'"/>
+                    </t>
+                    <table class="o_cc_table o_cc_matrix">
+                        <thead><tr>
+                            <th>Service</th>
+                            <th t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center"><t t-esc="c.name.toUpperCase()"/><div class="o_cc_th_sub"><t t-esc="c.services"/> services</div></th>
+                            <th class="text-center">Total</th>
+                        </tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.services.rows" t-as="r" t-key="r.key">
+                                <td class="o_cc_strong"><t t-esc="icon(r.key)"/> <t t-esc="r.label"/></td>
+                                <td t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center">
+                                    <t t-set="cell" t-value="r.branches[c.key]"/>
+                                    <t t-if="cell">
+                                        <b t-esc="k(cell.total)"/>
+                                        <div class="o_cc_mix"><div class="o_cc_mix_amc" t-att-style="'width:' + (cell.amc_share || 0) + '%'"/></div>
+                                    </t>
+                                    <span t-else="" class="text-muted">—</span>
+                                </td>
+                                <td class="text-center o_cc_strong" t-esc="k(r.total)"/>
+                            </tr>
+                        </tbody>
+                        <tfoot><tr>
+                            <td>Total</td>
+                            <td t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center" t-esc="k(c.total)"/>
+                            <td class="text-center" t-esc="k(d.services.grand)"/>
+                        </tr></tfoot>
+                    </table>
+                    <div class="o_cc_note o_cc_note_orange" t-if="d.services.notes.fewest">
+                        📍 <b><t t-esc="d.services.notes.fewest.name"/> sells <t t-esc="d.services.notes.fewest.services"/> service<t t-if="d.services.notes.fewest.services !== 1">s</t></b> and earns AED <t t-esc="k(d.services.notes.fewest.total)"/>.
+                        <t t-if="d.services.notes.exclusive"> <t t-esc="d.services.notes.exclusive.name"/> is the only branch with <t t-esc="d.services.notes.exclusive.services.join(', ')"/>.</t>
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="7"/></t>
+                </section>
+
+                </t>
+
+                <!-- ============ 7 · CREDIT RECOVERY ============ -->
+                <section class="o_cc_page" t-if="showSection('credit')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="compact ? 5 : 7"/><t t-set="title" t-value="'Credit Recovery'"/>
+                        <t t-set="sub" t-value="'Who owes us, and how old the debt is.'"/>
+                    </t>
+                    <div class="o_cc_kpis o_cc_kpis3">
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.credit.drill_total)"><b t-esc="k(d.credit.total)"/><span>total receivables</span><small>AED <t t-esc="k(d.credit.overdue)"/> over 60 days</small></div>
+                        <div class="o_cc_kpi o_cc_bg_blue" t-on-click="() => this.open(d.credit.drill_amc)"><b t-esc="k(d.credit.amc)"/><span>🔁 AMC receivables</span><small><t t-esc="pct(d.credit.amc_share)"/> of total</small></div>
+                        <div class="o_cc_kpi o_cc_bg_orange" t-on-click="() => this.open(d.credit.drill_cash)"><b t-esc="k(d.credit.cash)"/><span>💵 Cash receivables</span><small><t t-esc="pct(d.credit.cash_share)"/> of total</small></div>
+                    </div>
+                    <h3 class="o_cc_h3">⏳ Aging (Accounts SOP buckets)</h3>
+                    <div class="o_cc_kpis">
+                        <div t-foreach="d.credit.aging" t-as="a" t-key="a.key" t-att-class="'o_cc_kpi o_cc_age_' + a.key" t-on-click="() => this.open(a.drill)">
+                            <small t-esc="a.label"/><b t-esc="k(a.amount)"/><span t-esc="a.action"/>
+                        </div>
+                    </div>
+                    <h3 class="o_cc_h3">🏢 Key B2B accounts</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Client</th><th>Type</th><th>Service · Branch</th><th>Value (AED)</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.credit.accounts" t-as="acc" t-key="acc.id" t-on-click="() => this.open(acc.drill)">
+                                <td class="o_cc_strong" t-esc="acc.name"/>
+                                <td><span t-att-class="'o_cc_tag o_cc_tag_' + acc.stream"><t t-esc="acc.stream === 'amc' ? '🔁 AMC' : '💵 Cash'"/></span></td>
+                                <td><div t-esc="acc.service"/><small class="text-muted" t-esc="acc.branch"/></td>
+                                <td class="o_cc_strong" t-esc="k(acc.value)"/>
+                                <td><b t-att-class="acc.status === 'paid' ? 'o_cc_good' : acc.status === 'overdue' ? 'o_cc_bad' : 'o_cc_warn'"><t t-esc="acc.status === 'paid' ? '✓ Paid' : acc.status === 'overdue' ? '! Overdue' : '● Pending'"/></b></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-if="!d.credit.accounts.length">No customers billed this month.</p>
+                    <div class="o_cc_note o_cc_note_red" t-if="d.credit.worst">
+                        ⚠️ <b><t t-esc="d.credit.worst.name"/> owes AED <t t-esc="k(d.credit.worst.amount)"/> over 60 days</b>, the largest overdue account. 61–90 days = cash only, 90+ days = CEO action.
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="compact ? 6 : 8"/></t>
+                </section>
+
+                <!-- ============ 8 · SALES TEAM ============ -->
+                <section class="o_cc_page" t-if="showSection('sales')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="compact ? 6 : 8"/><t t-set="title" t-value="'Sales Team'"/>
+                        <t t-set="sub" t-value="'Deals closed in ' + d.month_label.split(' ')[0] + ', split by stream · dashed line = target.'"/>
+                    </t>
+                    <div class="o_cc_legend"><span class="o_cc_lg_amc">🔁 AMC (contracts)</span><span class="o_cc_lg_cash">💵 Cash Sales (one-time jobs)</span></div>
+                    <div class="o_cc_stack">
+                        <div class="o_cc_stack_row" t-foreach="d.sales.rows" t-as="r" t-key="r.id">
+                            <span class="o_cc_stack_label" t-esc="r.name"/>
+                            <div class="o_cc_stack_track">
+                                <div t-if="r.amc &gt; 0" class="o_cc_seg o_cc_seg_amc" t-att-style="'width:' + width(r.amc, d.sales.max_bar * 1.3) + '%'"><t t-if="r.amc" t-esc="r.amc"/></div>
+                                <div t-if="r.cash &gt; 0" class="o_cc_seg o_cc_seg_cash" t-att-style="'width:' + width(r.cash, d.sales.max_bar * 1.3) + '%'"><t t-if="r.cash" t-esc="r.cash"/></div>
+                                <div t-if="r.target" class="o_cc_target" t-att-style="'left:' + width(r.target, d.sales.max_bar * 1.3) + '%'"/>
+                                <span class="o_cc_stack_pct" t-att-style="'left:calc(' + width(Math.max(r.total, r.target, 0.0001), d.sales.max_bar * 1.3) + '% + 10px)'">
+                                    <b t-esc="r.total"/><t t-if="r.target"> / <t t-esc="r.target"/> · <b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></t>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Name</th><th>🔁 AMC Deals</th><th>💵 Cash Deals</th><th>Total</th><th>Target</th><th>Achv</th><th>AMC Mix</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.sales.rows" t-as="r" t-key="r.id">
+                                <td class="o_cc_strong" t-esc="r.name"/>
+                                <td t-esc="r.amc"/><td t-esc="r.cash"/>
+                                <td class="o_cc_strong" t-esc="r.total"/>
+                                <td t-esc="r.target || '—'"/>
+                                <td><b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></td>
+                                <td t-esc="pct(r.amc_mix)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-if="!d.sales.rows.length">No deals closed this month.</p>
+                    <p class="o_cc_tablenote">AMC deals = contracts starting this month (by salesperson on the contract); cash deals = cash-sale invoices (by salesperson on the invoice).</p>
+                    <div class="o_cc_two" t-if="d.sales.above.length or d.sales.below.length">
+                        <div class="o_cc_note o_cc_note_green">
+                            <t t-if="d.sales.above.length">🏆 <b t-esc="d.sales.above.join(', ')"/> <t t-esc="d.sales.above.length > 1 ? 'are' : 'is'"/> above target.</t>
+                            <t t-else="">🏆 Nobody is above target yet this month.</t>
+                        </div>
+                        <div class="o_cc_note o_cc_note_orange">
+                            <t t-if="d.sales.below.length">📌 <b t-esc="d.sales.below.join(', ')"/> <t t-esc="d.sales.below.length > 1 ? 'are' : 'is'"/> below target<t t-if="d.sales.lowest">; <t t-esc="d.sales.lowest.name"/> is lowest at <t t-esc="pct(d.sales.lowest.achieved)"/></t>.</t>
+                            <t t-else="">📌 Everyone with a target has reached it.</t>
+                        </div>
+                    </div>
+                    <div class="o_cc_note o_cc_note_orange" t-else="">📌 No deal targets are set. Set them under Command Centre → Configuration → Sales Team Targets.</div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="compact ? 7 : 9"/></t>
+                </section>
+
+                <!-- ============ 9 · EXPENSES ============ -->
+                <section class="o_cc_page" t-if="showSection('expenses')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="compact ? 7 : 9"/><t t-set="title" t-value="'Expenses &amp; Margin'"/>
+                        <t t-set="sub" t-value="'Cost structure for ' + d.month_label.split(' ')[0] + ', ' + (d.branch ? d.branch_label + ' branch.' : 'all branches.')"/>
+                    </t>
+                    <div class="o_cc_note o_cc_note_orange mt-0 mb-3" t-if="d.service or d.branch">
+                        ℹ️ <t t-if="d.service">Expenses are not split by service, so <b t-esc="d.service_label"/> does not filter this section. </t>
+                        <t t-if="d.branch">Only spend booked to the <b t-esc="d.branch_label"/> branch (vendor bills / entries with that branch) counts.</t>
+                    </div>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.expenses.drill)"><b t-esc="k(d.expenses.total)"/><span>total expenses</span><small t-if="d.expenses.delta !== null"><t t-esc="delta(d.expenses.delta)"/> vs <t t-esc="d.prev_month_label"/></small></div>
+                        <div class="o_cc_kpi o_cc_bg_green"><b t-esc="d.expenses.profit === null ? '—' : k(d.expenses.profit)"/><span>net profit</span></div>
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="pct(d.expenses.margin, 1)"/><span>net margin</span><small t-if="d.expenses.margin_target">target <t t-esc="pct(d.expenses.margin_target)"/></small></div>
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="pct(d.expenses.payroll_share)"/><span>payroll share</span><small>of total spend</small></div>
+                    </div>
+                    <h3 class="o_cc_h3">📊 Where the money goes</h3>
+                    <div class="o_cc_hbars">
+                        <div class="o_cc_hbar" t-foreach="d.expenses.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                            <span class="o_cc_hbar_label o_cc_strong" t-esc="r.name"/>
+                            <div class="o_cc_hbar_track">
+                                <div class="o_cc_hbar_fill o_cc_fill_navy" t-att-style="'width:' + width(r.amount, d.expenses.max * 1.3) + '%'"/>
+                                <span class="o_cc_hbar_val">AED <t t-esc="k(r.amount)"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table" t-if="d.expenses.rows.length">
+                        <thead><tr><th>Category</th><th>Amount (AED)</th><th>% of Revenue</th><th>vs <t t-esc="d.prev_month_label"/></th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.expenses.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.name"/>
+                                <td class="o_cc_strong" t-esc="k(r.amount)"/>
+                                <td t-esc="pct(r.revenue_pct, 1)"/>
+                                <td t-att-class="r.delta > 4 ? 'o_cc_bad' : ''" t-esc="r.delta === null ? 'new' : delta(r.delta)"/>
+                                <td><b t-att-class="r.status === 'pending' ? 'o_cc_warn' : 'o_cc_good'"><t t-esc="r.status === 'paid' ? '✓ Paid' : r.status === 'booked' ? '✓ Booked' : '● Pending'"/></b></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-else="">No expenses are booked for this month<t t-if="!d.include_draft"> (posted only)</t>.</p>
+                    <div class="o_cc_note o_cc_note_orange" t-if="d.expenses.margin_gap !== null">
+                        📌 <b>Margin is <t t-esc="Math.abs(d.expenses.margin_gap).toFixed(1)"/> points <t t-esc="d.expenses.margin_gap > 0 ? 'under' : 'over'"/> the <t t-esc="pct(d.expenses.margin_target)"/> target.</b>
+                        <t t-if="d.expenses.growing.length"> <t t-foreach="d.expenses.growing" t-as="g" t-key="g_index"><t t-esc="g.name"/> (<t t-esc="delta(g.delta)"/>)<t t-if="!g_last"> and </t></t> grew fastest.</t>
+                    </div>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="compact ? 8 : 10"/></t>
+                </section>
+
+                <!-- ============ 10 · CASH & BANK ============ -->
+                <section class="o_cc_page" t-if="showSection('bank')">
+                    <t t-call="fm_command_centre.SectionHead">
+                        <t t-set="n" t-value="compact ? 8 : 10"/><t t-set="title" t-value="'Cash &amp; Bank'"/>
+                        <t t-set="sub" t-value="'Where the money sits, and what moved this month.'"/>
+                    </t>
+                    <div class="o_cc_note o_cc_note_orange mt-0 mb-3" t-if="d.service or d.branch">
+                        ℹ️ Company-wide figures: bank and cash accounts belong to the company, so the service / branch filter does not apply to this section.
+                    </div>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="k(d.bank.balance)"/><span>cash &amp; bank</span><small><t t-esc="d.bank.account_count"/> accounts</small></div>
+                        <div class="o_cc_kpi o_cc_bg_green"><b t-esc="k(d.bank.inflow)"/><span>inflow, year to date</span><small t-if="d.bank.inflow_delta !== null"><t t-esc="delta(d.bank.inflow_delta)"/> vs last year</small></div>
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="k(d.bank.outflow)"/><span>outflow, year to date</span><small t-if="d.bank.outflow_delta !== null"><t t-esc="delta(d.bank.outflow_delta)"/> vs last year</small></div>
+                        <div t-att-class="'o_cc_kpi ' + (d.bank.net >= 0 ? 'o_cc_bg_green' : 'o_cc_bg_red')"><b t-esc="signed(d.bank.net)"/><span>net cash flow YTD</span><small t-esc="d.bank.net >= 0 ? 'positive' : 'negative'"/></div>
+                    </div>
+                    <h3 class="o_cc_h3">🏦 Balances</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Account</th><th>Number</th><th>Balance (AED)</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.bank.accounts" t-as="a" t-key="a.id" t-on-click="() => this.open(a.drill)">
+                                <td><div class="o_cc_strong" t-esc="a.name"/><small class="text-muted" t-esc="a.company"/></td>
+                                <td class="text-muted" t-esc="a.number"/>
+                                <td class="o_cc_strong" t-esc="k(a.balance)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3 class="o_cc_h3">🧾 Recent transactions · client payments tagged by stream</h3>
+                    <table class="o_cc_table" t-if="d.bank.transactions.length">
+                        <thead><tr><th>Date</th><th>Account</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.bank.transactions" t-as="tx" t-key="tx.id" t-on-click="() => this.open(tx.drill)">
+                                <td class="text-muted" t-esc="tx.date"/>
+                                <td class="text-muted" t-esc="tx.account"/>
+                                <td class="o_cc_strong"><t t-esc="tx.description"/><small t-if="tx.partner" class="text-muted"> — <t t-esc="tx.partner"/></small></td>
+                                <td><span t-if="tx.stream" t-att-class="'o_cc_tag o_cc_tag_' + tx.stream"><t t-esc="tx.stream === 'amc' ? '🔁 AMC' : '💵 Cash'"/></span><span t-else="" class="text-muted">—</span></td>
+                                <td t-att-class="tx.amount >= 0 ? 'o_cc_good o_cc_strong' : 'o_cc_strong'" t-esc="signed(tx.amount)"/>
+                                <td><b t-att-class="tx.status === 'processing' ? 'o_cc_warn' : 'o_cc_good'" t-esc="tx.status === 'processing' ? '● Processing' : '✓ Cleared'"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-else="">No posted bank or cash movements yet.</p>
+                    <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="compact ? 9 : 11"/></t>
+                </section>
+            </div>
+        </div>
+    </t>
+</templates>

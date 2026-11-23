@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_fm_contract_agreement_template_list" model="ir.ui.view">
+        <field name="name">fm.contract.agreement.template.list</field>
+        <field name="model">fm.contract.agreement.template</field>
+        <field name="arch" type="xml">
+            <list string="Agreement Templates">
+                <field name="name"/>
+                <field name="service_line"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fm_contract_agreement_template_search" model="ir.ui.view">
+        <field name="name">fm.contract.agreement.template.search</field>
+        <field name="model">fm.contract.agreement.template</field>
+        <field name="arch" type="xml">
+            <search string="Agreement Templates">
+                <field name="name"/>
+                <field name="service_line"/>
+                <separator/>
+                <filter name="group_service" string="Service" context="{'group_by': 'service_line'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_fm_contract_agreement_template_form" model="ir.ui.view">
+        <field name="name">fm.contract.agreement.template.form</field>
+        <field name="model">fm.contract.agreement.template</field>
+        <field name="arch" type="xml">
+            <form string="Agreement Template">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Pest Control — Standard"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="service_line"/>
+                            <field name="replaces_standard_articles"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="client_layout"/>
+                            <field name="signature_party" invisible="not client_layout"/>
+                            <field name="table_columns" invisible="not client_layout"/>
+                            <field name="italic_labels" invisible="not client_layout"/>
+                        </group>
+                    </group>
+                    <group string="Quotation wording">
+                        <field name="quotation_intro_text" nolabel="1"
+                               placeholder="Greeting/intro paragraph shown after 'Dear ...' on the Quotation."/>
+                        <field name="scope_method_text" nolabel="1"
+                               placeholder="Scope of Work methodology paragraph (general approach, not the site-specific area list)."/>
+                    </group>
+                    <group string="Service Agreement wording">
+                        <field name="service_text" nolabel="1"
+                               placeholder="Article 2 (Service) paragraph."/>
+                        <field name="schedule_text" nolabel="1"
+                               placeholder="Article 4 (Service Schedule) paragraph."/>
+                    </group>
+                    <group string="Default Exclusions">
+                        <field name="exclusions_default_text" nolabel="1"
+                               placeholder="Used for Article 6 / the Quotation when the contract has no Exclusions listed."/>
+                    </group>
+                    <notebook>
+                        <page string="Additional Terms" name="lines">
+                            <p class="text-muted">
+                                Free-form extra articles this service needs that the standard
+                                skeleton doesn't have — e.g. Tank Details, Warranty Certificate,
+                                Customer Responsibility, Materials &amp; Methods. Printed as their
+                                own headed sections on the Service Agreement, in this order.
+                            </p>
+                            <field name="line_ids">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="kind"/>
+                                    <field name="name" placeholder="e.g. Tank Details"/>
+                                    <field name="body" placeholder="Body text..."/>
+                                </list>
+                                <form string="Additional Term">
+                                    <group>
+                                        <field name="kind"/>
+                                        <field name="name"/>
+                                    </group>
+                                    <separator string="Body (formatted)"/>
+                                    <field name="body_html" nolabel="1" options="{'collaborative': false}"/>
+                                    <separator string="Body (plain text)"/>
+                                    <field name="body" nolabel="1"/>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fm_contract_agreement_template" model="ir.actions.act_window">
+        <field name="name">Agreement Templates</field>
+        <field name="res_model">fm.contract.agreement.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_fm_contract_agreement_template_search"/>
+        <field name="context">{'search_default_group_service': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a per-service agreement template</p>
+            <p>
+                Editable wording used by the printed Quotation and Service Agreement —
+                one per service line (Pest Control, Cleaning, HVAC, ...). A contract
+                picks one via "Agreement Wording Template" on its Printed Agreement page;
+                leaving it blank falls back to generic wording.
+            </p>
+        </field>
+    </record>
+
+</odoo>

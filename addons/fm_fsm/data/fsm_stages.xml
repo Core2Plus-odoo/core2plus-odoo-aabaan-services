@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Field Service task stages mirroring the retired fm.workorder state
+         machine (brief §6.1). These are standard project.task.type records so
+         the whole native FSM kanban / planning / reporting stack applies. -->
+
+    <record id="fsm_stage_draft" model="project.task.type">
+        <field name="name">Draft</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="fsm_stage_assigned" model="project.task.type">
+        <field name="name">Assigned</field>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="fsm_stage_acknowledged" model="project.task.type">
+        <field name="name">Acknowledged</field>
+        <field name="sequence">3</field>
+    </record>
+
+    <record id="fsm_stage_in_progress" model="project.task.type">
+        <field name="name">In Progress</field>
+        <field name="sequence">4</field>
+    </record>
+
+    <!-- A visit whose work is done but whose service document is still
+         missing. The client's process document makes this a first-class
+         status: "7 jobs awaiting documents. These stay open until the
+         technician uploads the service photo/report." -->
+    <record id="fsm_stage_pending_docs" model="project.task.type">
+        <field name="name">Pending Documents</field>
+        <field name="sequence">5</field>
+    </record>
+
+    <record id="fsm_stage_completed" model="project.task.type">
+        <field name="name">Completed</field>
+        <field name="sequence">6</field>
+        <field name="fm_requires_document" eval="True"/>
+    </record>
+
+    <record id="fsm_stage_signed_off" model="project.task.type">
+        <field name="name">Signed Off</field>
+        <field name="sequence">7</field>
+        <field name="fm_requires_document" eval="True"/>
+        <field name="fold" eval="True"/>
+    </record>
+
+    <record id="fsm_stage_cancelled" model="project.task.type">
+        <field name="name">Cancelled</field>
+        <field name="sequence">8</field>
+        <field name="fold" eval="True"/>
+    </record>
+
+</odoo>

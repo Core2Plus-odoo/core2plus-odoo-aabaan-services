@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Branch targets -->
+    <record id="view_cc_branch_targets_list" model="ir.ui.view">
+        <field name="name">fm.branch.cc.targets.list</field>
+        <field name="model">fm.branch</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="false" delete="false">
+                <field name="name" readonly="1"/>
+                <field name="manager_id"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="amc_monthly_target" sum="Total"/>
+                <field name="cash_monthly_target" sum="Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cc_branch_targets" model="ir.actions.act_window">
+        <field name="name">Branch Targets</field>
+        <field name="res_model">fm.branch</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_cc_branch_targets_list"/>
+        <field name="help" type="html">
+            <p>Monthly AMC and cash-sales revenue targets per branch (excl. VAT).
+               The manager shown here is printed under the branch on the scorecard.</p>
+        </field>
+    </record>
+
+    <!-- Salesperson targets -->
+    <record id="view_cc_sales_targets_list" model="ir.ui.view">
+        <field name="name">fm.cc.sales.target.list</field>
+        <field name="model">fm.cc.sales.target</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="user_id"/>
+                <field name="deal_target" sum="Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cc_sales_targets" model="ir.actions.act_window">
+        <field name="name">Sales Team Targets</field>
+        <field name="res_model">fm.cc.sales.target</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p>Add each salesperson with the number of deals they should close in a
+               month. Salespeople with a target always appear on the dashboard.</p>
+        </field>
+    </record>
+
+    <!-- Product classification -->
+    <record id="view_cc_products_list" model="ir.ui.view">
+        <field name="name">product.template.cc.list</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="false" delete="false">
+                <field name="default_code" readonly="1" optional="show"/>
+                <field name="name" readonly="1"/>
+                <field name="fm_cc_service"/>
+                <field name="fm_cc_stream" placeholder="By customer"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cc_products_search" model="ir.ui.view">
+        <field name="name">product.template.cc.search</field>
+        <field name="model">product.template</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="amc" string="AMC" domain="[('fm_cc_stream', '=', 'amc')]"/>
+                <filter name="cash" string="Cash Sale" domain="[('fm_cc_stream', '=', 'cash')]"/>
+                <filter name="by_customer" string="Decided per customer"
+                        domain="[('fm_cc_stream', '=', False)]"/>
+                <filter name="g_service" string="Service" context="{'group_by': 'fm_cc_service'}"/>
+                <filter name="g_stream" string="Stream" context="{'group_by': 'fm_cc_stream'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_cc_products" model="ir.actions.act_window">
+        <field name="name">Service Classification</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_cc_products_list"/>
+        <field name="search_view_id" ref="view_cc_products_search"/>
+        <field name="domain">[('sale_ok', '=', True)]</field>
+        <field name="help" type="html">
+            <p>Which dashboard service and revenue stream each product counts under.
+               Leave the stream blank to decide it per invoice: customers holding a
+               confirmed contract count as AMC, everyone else as a cash sale.</p>
+        </field>
+    </record>
+
+    <!-- Invoice classification -->
+    <record id="view_cc_invoices_list" model="ir.ui.view">
+        <field name="name">account.move.cc.list</field>
+        <field name="model">account.move</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="false" delete="false">
+                <field name="name" readonly="1"/>
+                <field name="invoice_date" readonly="1"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="amount_untaxed_signed" readonly="1" sum="Total"/>
+                <field name="state" readonly="1" widget="badge"/>
+                <field name="fm_cc_stream"/>
+                <field name="fm_cc_branch_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cc_invoices_search" model="ir.ui.view">
+        <field name="name">account.move.cc.search</field>
+        <field name="model">account.move</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <filter name="no_branch" string="No branch"
+                        domain="[('fm_cc_branch_id', '=', False)]"/>
+                <filter name="amc" string="AMC" domain="[('fm_cc_stream', '=', 'amc')]"/>
+                <filter name="cash" string="Cash Sale" domain="[('fm_cc_stream', '=', 'cash')]"/>
+                <filter name="g_branch" string="Branch" context="{'group_by': 'fm_cc_branch_id'}"/>
+                <filter name="g_stream" string="Stream" context="{'group_by': 'fm_cc_stream'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_cc_invoices" model="ir.actions.act_window">
+        <field name="name">Invoice Classification</field>
+        <field name="res_model">account.move</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_cc_invoices_list"/>
+        <field name="search_view_id" ref="view_cc_invoices_search"/>
+        <field name="domain">[('move_type', 'in', ('out_invoice', 'out_refund'))]</field>
+    </record>
+
+    <!-- Company settings -->
+    <record id="view_cc_company_list" model="ir.ui.view">
+        <field name="name">res.company.cc.list</field>
+        <field name="model">res.company</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" create="false" delete="false">
+                <field name="name" readonly="1"/>
+                <field name="fm_cc_margin_target"/>
+                <field name="fm_cc_tagline"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cc_settings" model="ir.actions.act_window">
+        <field name="name">Dashboard Settings</field>
+        <field name="res_model">res.company</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_cc_company_list"/>
+    </record>
+
+</odoo>

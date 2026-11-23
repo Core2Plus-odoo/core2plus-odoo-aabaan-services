@@ -1,0 +1,27 @@
+// Service Request confirmation popup (portal).
+.fm_request_toast {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 1080;
+    min-width: 300px;
+    max-width: 380px;
+    border: 0;
+    border-left: 5px solid #1f9a3e;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+    animation: fm-toast-in .35s ease-out, fm-toast-out .6s ease-in 7s forwards;
+    .toast-header { font-weight: 600; }
+}
+
+@keyframes fm-toast-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes fm-toast-out {
+    to { opacity: 0; visibility: hidden; transform: translateY(-12px); }
+}
+
+@media (max-width: 576px) {
+    .fm_request_toast { left: 12px; right: 12px; top: 70px; min-width: 0; max-width: none; }
+}

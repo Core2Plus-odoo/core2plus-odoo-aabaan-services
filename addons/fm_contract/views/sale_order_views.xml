@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The sale order IS the contract. Everything FM adds to it lives on
+         one notebook page plus a flag, so an ordinary quotation looks
+         exactly as it did before and a contract is one tick away.
+
+         Requiredness is expressed here, not in the columns: these fields
+         are mandatory because a record is a contract, and most sale orders
+         in this database never will be. A required column would stop every
+         ordinary quotation saving. -->
+    <record id="view_order_form_fm_contract" model="ir.ui.view">
+        <field name="name">sale.order.form.fm.contract</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Quotations and Contracts menus (context fm_flow) speak the
+                 client's words: a quotation is Approved, not Confirmed, and
+                 approving it is what makes the contract. -->
+            <xpath expr="//header/button[@id='action_confirm']" position="attributes">
+                <attribute name="invisible" add="context.get('fm_flow')" separator=" or "/>
+            </xpath>
+            <xpath expr="//header/button[@name='action_confirm'][not(@id)]" position="attributes">
+                <attribute name="invisible" add="context.get('fm_flow')" separator=" or "/>
+            </xpath>
+            <xpath expr="//header/field[@name='state']" position="attributes">
+                <attribute name="invisible">context.get('fm_flow')</attribute>
+            </xpath>
+            <xpath expr="//header/field[@name='state']" position="after">
+                <field name="fm_quote_status" widget="statusbar"
+                       statusbar_visible="draft,sent,approved"
+                       invisible="not context.get('fm_flow') or is_fm_contract and fm_lifecycle"/>
+                <field name="fm_lifecycle" widget="statusbar"
+                       statusbar_visible="draft,active"
+                       invisible="not context.get('fm_flow') or not is_fm_contract or not fm_lifecycle"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_fm_view_contract" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not fm_created_contract_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Contract</span>
+                        <span class="o_stat_value"><field name="fm_created_contract_id" readonly="1" options="{'no_open': True}"/></span>
+                    </div>
+                </button>
+                <button name="action_fm_view_source_quotation" type="object"
+                        class="oe_stat_button" icon="fa-file-o"
+                        invisible="not fm_source_quotation_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Quotation</span>
+                        <span class="o_stat_value"><field name="fm_source_quotation_id" readonly="1" options="{'no_open': True}"/></span>
+                    </div>
+                </button>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button name="action_fm_approve" type="object" string="Approve"
+                        class="btn-primary" data-hotkey="q"
+                        confirm="Has the customer approved this quotation? It is marked Approved and stays under Quotations; press Create Contract to make the contract."
+                        invisible="state not in ('draft', 'sent') or fm_quote_approved"/>
+                <button name="action_fm_create_contract" type="object" string="Create Contract"
+                        class="btn-primary"
+                        confirm="Create the contract from this approved quotation? The quotation stays under Quotations as Approved, and a new Draft contract is created under Contracts."
+                        invisible="state not in ('draft', 'sent') or not fm_quote_approved or fm_created_contract_id"/>
+                <field name="fm_quote_approved" invisible="1"/>
+                <field name="fm_created_contract_id" invisible="1"/>
+                <field name="fm_source_quotation_id" invisible="1"/>
+                <button name="action_fm_set_renewal" type="object"
+                        string="Move to Renewal"
+                        invisible="fm_lifecycle != 'active'"/>
+                <button name="action_fm_terminate" type="object"
+                        string="Terminate Contract"
+                        invisible="fm_lifecycle not in ('active', 'renewal_pipeline')"/>
+                <button name="action_fm_reactivate" type="object"
+                        string="Reactivate Contract"
+                        invisible="fm_lifecycle not in ('expired', 'terminated')"/>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="is_fm_contract"/>
+                <field name="fm_contract_number" invisible="not fm_contract_number"/>
+                <field name="fm_lifecycle" invisible="not is_fm_contract"
+                       readonly="1"/>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="FM Contract" name="fm_contract"
+                      invisible="not is_fm_contract">
+                    <group>
+                        <group string="Term">
+                            <field name="fm_service_line"
+                                   required="is_fm_contract"
+                                   placeholder="What service is this for?"/>
+                            <field name="fm_contract_type" required="is_fm_contract"/>
+                            <!-- Job Type, Duration and each line's frequency are
+                                 set in the Create Job wizard and shown here. -->
+                            <field name="fm_job_type" readonly="1"/>
+                            <field name="fm_start_date" required="is_fm_contract"/>
+                            <label for="fm_duration"/>
+                            <div class="o_row">
+                                <field name="fm_duration" class="oe_inline" style="max-width: 5rem;" readonly="1"/>
+                                <field name="fm_duration_unit" class="oe_inline" readonly="1"/>
+                            </div>
+                            <field name="fm_end_date" required="is_fm_contract"/>
+                            <field name="fm_days_to_renewal"/>
+                            <field name="fm_auto_renew"/>
+                            <field name="fm_renewal_term_months" invisible="not fm_auto_renew"/>
+                        </group>
+                        <group string="Commercials &amp; Health">
+                            <field name="fm_tcv"/>
+                            <field name="fm_billing_frequency"/>
+                            <field name="fm_next_invoice_date"/>
+                            <field name="fm_account_manager_id" required="is_fm_contract"/>
+                            <field name="fm_health_score"/>
+                            <field name="fm_health_band" widget="badge"/>
+                        </group>
+                    </group>
+                    <separator string="Service Terms"/>
+                    <group>
+                        <group string="The Site">
+                            <field name="fm_premises_type"/>
+                        </group>
+                        <group string="What the Contract Promises">
+                            <field name="fm_complaint_sla"/>
+                            <field name="fm_complaint_sla_hours"
+                                   invisible="not fm_complaint_sla"/>
+                            <field name="fm_callout_allowance"/>
+                            <field name="fm_followup_days"/>
+                            <field name="fm_warranty_years"/>
+                        </group>
+                    </group>
+
+                    <separator string="Scope"/>
+                    <group>
+                        <field name="fm_asset_ids" widget="many2many_tags"/>
+                    </group>
+                    <group>
+                        <field name="fm_service_inclusions" widget="many2many_tags" string="Inclusions"/>
+                        <field name="fm_service_exclusions" widget="many2many_tags" string="Exclusions"/>
+                    </group>
+                    <group>
+                        <field name="fm_customer_contact_ids" widget="many2many_tags"
+                               string="Customer Contacts"/>
+                    </group>
+                    <separator string="SLA Rules"/>
+                    <field name="fm_sla_rule_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="severity"/>
+                            <field name="response_target_minutes"/>
+                            <field name="resolution_target_minutes"/>
+                            <field name="business_hours_only"/>
+                            <field name="penalty_per_breach"/>
+                            <field name="credit_per_breach"/>
+                            <field name="currency_id" column_invisible="1"/>
+                        </list>
+                    </field>
+                    <separator string="Penalty Clauses"/>
+                    <field name="fm_penalty_clause_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="trigger"/>
+                            <field name="amount"/>
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="notes"/>
+                        </list>
+                    </field>
+                </page>
+
+                <page string="Printed Agreement" name="fm_agreement"
+                      invisible="not is_fm_contract">
+                    <div class="alert alert-warning" role="alert"
+                         invisible="fm_agreement_unresolved_count == 0">
+                        <field name="fm_agreement_unresolved_count" class="oe_inline"/>
+                        fact(s) in this wording have nothing to fill them:
+                        <field name="fm_agreement_unresolved_names" class="oe_inline"/>.
+                        They print as a pencil mark on the document.
+                    </div>
+
+                    <p class="text-muted">
+                        Wording used by the printed Quotation and Service Agreement.
+                        Leave a field blank to fall back to a sensible default.
+                    </p>
+                    <group>
+                        <field name="subject" placeholder="e.g. PEST CONTROL TREATMENT FOR ROYAL APARTMENT G+11"/>
+                        <field name="agreement_template_id"
+                               placeholder="Generic wording (no template selected)"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <p class="text-muted" invisible="not agreement_template_id">
+                        Selecting a template copies its wording into the fields below —
+                        edit them freely, your changes only affect this contract.
+                    </p>
+                    <!-- Client Document Layout: the agreement lines ARE the printed
+                         document, so only what that document prints is shown. -->
+                    <group invisible="not agreement_client_layout">
+                        <field name="fm_client_title" placeholder="e.g. MS"/>
+                        <field name="payment_terms_note" placeholder="e.g. 2 times Payment"/>
+                    </group>
+                    <group invisible="agreement_client_layout">
+                        <group string="Scope &amp; Treatment">
+                            <field name="scope_notes" nolabel="1" colspan="2" placeholder="Areas/site covered..."/>
+                            <field name="treatment_notes" nolabel="1" colspan="2" placeholder="Treatment methods (optional)..."/>
+                        </group>
+                        <group string="Commercial Terms">
+                            <field name="payment_terms_note" placeholder="e.g. 50% at signing, 50% after 6 months"/>
+                            <field name="unscheduled_visits_included"/>
+                            <field name="termination_notice_days"/>
+                            <field name="complaint_response_hours"/>
+                        </group>
+                    </group>
+                    <div invisible="agreement_client_layout">
+                        <separator string="Editable Agreement Wording (from template, or write your own)"/>
+                        <separator string="Quotation Intro"/>
+                        <field name="quotation_intro_text" class="w-100" placeholder="Quotation greeting/intro paragraph..."/>
+                        <separator string="Quotation — Scope of Work Methodology"/>
+                        <field name="scope_method_text" class="w-100" placeholder="Quotation Scope of Work methodology..."/>
+                        <separator string="Service Agreement — Article 2 (Service)"/>
+                        <field name="service_text" class="w-100" placeholder="Service Agreement Article 2 (Service)..."/>
+                        <separator string="Service Agreement — Article 4 (Service Schedule)"/>
+                        <field name="schedule_text" class="w-100" placeholder="Service Agreement Article 4 (Service Schedule)..."/>
+                        <separator string="Default Exclusions"/>
+                        <field name="exclusions_text" class="w-100" placeholder="Default exclusions wording..."/>
+                    </div>
+                    <separator string="Agreement Wording (printed in this order)" invisible="not agreement_client_layout"/>
+                    <separator string="Additional Terms (editable)" invisible="agreement_client_layout"/>
+                    <field name="agreement_line_ids" class="w-100">
+                        <list>
+                            <field name="sequence" widget="handle"/>
+                            <field name="kind"/>
+                            <field name="name" placeholder="e.g. Tank Details"/>
+                            <field name="body" placeholder="Body text..." optional="show"/>
+                        </list>
+                        <form string="Agreement Wording">
+                            <group>
+                                <field name="kind"/>
+                                <field name="name"/>
+                            </group>
+                            <separator string="Body (formatted — this is what prints)"/>
+                            <field name="body_html" class="w-100" options="{'collaborative': false}"/>
+                            <separator string="Body (plain text)"/>
+                            <field name="body" class="w-100"/>
+                        </form>
+                    </field>
+                    <field name="agreement_standalone" invisible="1"/>
+                    <field name="agreement_client_layout" invisible="1"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_list_fm_contract" model="ir.ui.view">
+        <field name="name">sale.order.list.fm.contract</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Contracts">
+                <field name="fm_contract_number"/>
+                <field name="name" string="Sales Order"/>
+                <field name="partner_id"/>
+                <field name="fm_service_line"/>
+                <field name="fm_contract_type"/>
+                <field name="fm_start_date"/>
+                <field name="fm_end_date"/>
+                <field name="fm_tcv" sum="Total"/>
+                <field name="fm_health_band" widget="badge"
+                       decoration-success="fm_health_band == 'healthy'"
+                       decoration-warning="fm_health_band == 'watch'"
+                       decoration-danger="fm_health_band in ('at_risk', 'critical')"/>
+                <field name="fm_lifecycle" widget="badge" string="Status"
+                       decoration-info="fm_lifecycle == 'draft'"
+                       decoration-success="fm_lifecycle == 'active'"
+                       decoration-warning="fm_lifecycle == 'renewal_pipeline'"
+                       decoration-muted="fm_lifecycle in ('expired', 'terminated')"/>
+                <field name="amount_total" sum="Total" optional="show"/>
+                <field name="invoice_status" optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_order_search_fm_contract" model="ir.ui.view">
+        <field name="name">sale.order.search.fm.contract</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <search string="Contracts">
+                <field name="name" string="Sales Order"
+                       filter_domain="['|', ('name', 'ilike', self), ('origin', 'ilike', self)]"/>
+                <field name="fm_contract_number"/>
+                <field name="partner_id"/>
+                <field name="fm_service_line"/>
+                <field name="fm_account_manager_id"/>
+                <separator/>
+                <filter name="draft_contracts" string="Draft (no jobs yet)"
+                        domain="[('fm_lifecycle', '=', 'draft')]"/>
+                <filter name="active_contracts" string="Approved"
+                        domain="[('fm_lifecycle', '=', 'active')]"/>
+                <filter name="renewal" string="In Renewal"
+                        domain="[('fm_lifecycle', '=', 'renewal_pipeline')]"/>
+                <filter name="my_contracts" string="My Contracts"
+                        domain="[('fm_account_manager_id', '=', uid)]"/>
+                <separator/>
+                <filter name="group_lifecycle" string="Contract Stage"
+                        context="{'group_by': 'fm_lifecycle'}"/>
+                <filter name="group_order_state" string="Order Status"
+                        context="{'group_by': 'state'}"/>
+                <filter name="group_type" string="Type"
+                        context="{'group_by': 'fm_contract_type'}"/>
+                <filter name="group_service" string="Service"
+                        context="{'group_by': 'fm_service_line'}"/>
+                <filter name="group_band" string="Health"
+                        context="{'group_by': 'fm_health_band'}"/>
+                <filter name="group_am" string="Account Manager"
+                        context="{'group_by': 'fm_account_manager_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Quotations: everything not yet approved by the customer. Approving
+         one (the Approve button) confirms it and moves it to Contracts. -->
+    <record id="view_order_list_fm_quotation" model="ir.ui.view">
+        <field name="name">sale.order.list.fm.quotation</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <list string="Quotations" decoration-muted="state == 'cancel'">
+                <field name="name" string="Quotation"/>
+                <field name="date_order" string="Date" widget="date"/>
+                <field name="partner_id"/>
+                <field name="sale_order_template_id" optional="show"/>
+                <field name="fm_service_line" optional="show"/>
+                <field name="user_id" optional="show" widget="many2one_avatar_user"/>
+                <field name="validity_date" optional="hide"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="fm_quote_status" widget="badge" string="Status"
+                       decoration-info="fm_quote_status == 'draft'"
+                       decoration-warning="fm_quote_status == 'sent'"
+                       decoration-success="fm_quote_status == 'approved'"
+                       decoration-muted="fm_quote_status == 'cancel'"/>
+                <field name="fm_created_contract_id" string="Contract" optional="show"/>
+                <field name="state" column_invisible="1"/>
+                <field name="currency_id" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_order_search_fm_quotation" model="ir.ui.view">
+        <field name="name">sale.order.search.fm.quotation</field>
+        <field name="model">sale.order</field>
+        <field name="arch" type="xml">
+            <search string="Quotations">
+                <field name="name" string="Quotation"/>
+                <field name="partner_id"/>
+                <field name="sale_order_template_id"/>
+                <field name="fm_service_line"/>
+                <field name="user_id"/>
+                <separator/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="sent" string="Sent" domain="[('state', '=', 'sent')]"/>
+                <filter name="cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                <filter name="approved" string="Approved" domain="[('fm_quote_approved', '=', True)]"/>
+                <separator/>
+                <filter name="my_quotations" string="My Quotations" domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="group_status" string="Status" context="{'group_by': 'fm_quote_status'}"/>
+                <filter name="group_service" string="Service" context="{'group_by': 'fm_service_line'}"/>
+                <filter name="group_customer" string="Customer" context="{'group_by': 'partner_id'}"/>
+                <filter name="group_user" string="Salesperson" context="{'group_by': 'user_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_fm_quotation" model="ir.actions.act_window">
+        <field name="name">Quotations</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_order_search_fm_quotation"/>
+        <field name="domain">[('state', 'in', ('draft', 'sent', 'cancel'))]</field>
+        <field name="context">{'fm_flow': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a quotation</p>
+            <p>
+                Pick the customer and a quotation template, then send it.
+                When the customer approves it, press <b>Approve</b>: it stays
+                here, marked Approved. Press <b>Create Contract</b> to make the
+                contract; it then moves to <b>Contracts</b>.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_fm_quotation_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_order_list_fm_quotation"/>
+        <field name="act_window_id" ref="action_fm_quotation"/>
+    </record>
+
+    <record id="action_fm_quotation_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="sale.view_order_form"/>
+        <field name="act_window_id" ref="action_fm_quotation"/>
+    </record>
+
+    <record id="action_fm_contract_order" model="ir.actions.act_window">
+        <field name="name">Contracts</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_order_search_fm_contract"/>
+        <field name="domain">[('is_fm_contract', '=', True), ('state', 'in', ('sale', 'done'))]</field>
+        <field name="context">{'default_is_fm_contract': True, 'fm_flow': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No contracts yet</p>
+            <p>
+                A contract starts as a quotation. When the customer approves
+                it, press <b>Approve</b> and then <b>Create Contract</b> on the
+                quotation, and it arrives here as a Draft contract. Fill in the contract details, then press
+                <b>Create Job</b> to put its visits on the calendar.
+            </p>
+        </field>
+    </record>
+
+    <!-- The action's own list/form come from these two views; the generic
+         sale order list would show none of the contract columns. -->
+    <record id="action_fm_contract_order_list" model="ir.actions.act_window.view">
+        <field name="sequence" eval="10"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_order_list_fm_contract"/>
+        <field name="act_window_id" ref="action_fm_contract_order"/>
+    </record>
+
+    <record id="action_fm_contract_order_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="20"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="sale.view_order_form"/>
+        <field name="act_window_id" ref="action_fm_contract_order"/>
+    </record>
+
+
+    <!-- The client contract prints a line as Unit x Rate x Frequency: these
+         two columns are what it prints in Unit and Frequency. -->
+    <record id="view_order_form_fm_client_line_columns" model="ir.ui.view">
+        <field name="name">sale.order.form.fm.client.line.columns</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="before">
+                <field name="fm_frequency_every" string="Every" optional="hide" readonly="1"
+                       column_invisible="parent.fm_job_type != 'recurring' or not parent.fm_lifecycle"/>
+                <field name="fm_frequency_count" string="Frequency" optional="show" readonly="1"
+                       column_invisible="parent.fm_job_type != 'recurring' or not parent.fm_lifecycle"
+                       invisible="display_type"/>
+                <field name="fm_frequency_unit" string="Per" optional="show" readonly="1"
+                       column_invisible="parent.fm_job_type != 'recurring' or not parent.fm_lifecycle"
+                       invisible="display_type"/>
+                <field name="fm_print_unit" optional="show"/>
+                <field name="fm_print_details" optional="hide" widget="html"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//field[@name='name']" position="after">
+                <field name="fm_print_details" widget="html"/>
+                <group invisible="parent.fm_job_type != 'recurring' or not parent.fm_lifecycle">
+                    <label for="fm_frequency_count"/>
+                    <div class="o_row">
+                        <field name="fm_frequency_every" nolabel="1" readonly="1"/><span invisible="not fm_frequency_every">Every</span>
+                        <field name="fm_frequency_count" class="oe_inline" style="max-width: 5rem;" readonly="1"/>
+                        <span invisible="fm_frequency_every">per</span>
+                        <field name="fm_frequency_unit" class="oe_inline" readonly="1"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
