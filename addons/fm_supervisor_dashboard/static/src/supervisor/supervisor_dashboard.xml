@@ -82,8 +82,8 @@
                                         <t t-foreach="c.events" t-as="e" t-key="e.id">
                                             <div t-if="e_index &lt; 3 or state.expanded[c.date]"
                                                  class="o_fm_cal_evt" t-on-click="() => this.openVisit(e.id)"
-                                                 t-att-title="e.sub ? e.title + ' — ' + e.sub : e.title">
-                                                <span class="o_fm_cal_tag" t-attf-style="background: {{e.color}};"><t t-esc="e.status_label"/></span>
+                                                 t-attf-style="background: {{e.color}};"
+                                                 t-att-title="e.status_label + ': ' + (e.sub ? e.title + ' — ' + e.sub : e.title)">
                                                 <span class="o_fm_cal_txt"><t t-esc="e.title"/></span>
                                             </div>
                                         </t>

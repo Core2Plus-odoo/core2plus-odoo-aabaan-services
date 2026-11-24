@@ -19,6 +19,20 @@
         </field>
     </record>
 
+    <!-- Contract Subject under Allocated Time. The form has two Allocated
+         Time blocks; the one shown on a visit is industry_fsm's (left
+         column), told apart from hr_timesheet's by its invisible condition. -->
+    <record id="view_fsm_task_form_fm_subject" model="ir.ui.view">
+        <field name="name">project.task.form.fm.contract.subject</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="industry_fsm.view_task_form2_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='allocated_hours_container'][@invisible='not (allow_timesheets and is_fsm)']" position="after">
+                <field name="fm_contract_subject" invisible="not fm_contract_order_id"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Visit calendar: auto-scheduled and reactive FM work orders by date.
          Coloured by status (stage), keyed on the visit date (date_deadline).
          Each event shows the customer/site as its title (see the visit name

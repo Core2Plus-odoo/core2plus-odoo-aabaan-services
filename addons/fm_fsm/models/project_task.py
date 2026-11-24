@@ -48,6 +48,12 @@ class ProjectTask(models.Model):
         help="The contract this visit belongs to. A contract is a sale "
              "order, so this is the order the customer agreed to.",
     )
+    # Read straight off the contract, so every visit shows its own
+    # contract's subject and an edit on the contract shows up everywhere.
+    fm_contract_subject = fields.Char(
+        related="fm_contract_order_id.subject",
+        string="Contract Subject",
+    )
     # Deliberately NOT project.task.sale_order_id: that native field means
     # "the order this task bills to", derived from the sale order line that
     # created the task, and it is computed. A visit generated from an AMC

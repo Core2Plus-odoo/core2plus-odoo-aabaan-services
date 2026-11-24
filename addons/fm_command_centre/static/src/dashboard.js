@@ -24,7 +24,7 @@ export class FmCommandCentre extends Component {
             month: false,
             includeDraft: true,
             // Which numbered section is on screen; the cover always is.
-            section: "all",
+            section: "amc",
             service: false,
             branch: false,
         });
@@ -61,8 +61,8 @@ export class FmCommandCentre extends Component {
 
     get sectionList() {
         const all = [
-            { key: "versus", label: "AMC vs Cash Sales" },
             { key: "amc", label: "AMC Department" },
+            { key: "versus", label: "AMC vs Cash Sales" },
             { key: "cash", label: "Cash Sales" },
             { key: "scorecard", label: "Branch Scorecard" },
             { key: "services", label: "Revenue by Service", full: true },

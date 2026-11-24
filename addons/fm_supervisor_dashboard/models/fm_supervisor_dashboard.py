@@ -133,15 +133,22 @@ class FmSupervisorDashboard(models.AbstractModel):
                 return "in_progress"
             return "planned"
 
+        def subject_of(t):
+            return (t.fm_contract_subject or "").strip() if "fm_contract_subject" in t._fields else ""
+
         def title_of(t):
             # The job's own name ("Customer — Carpet Cleaning (2/4)"), led by
             # the customer when the name does not already carry it, as
             # Odoo's one-task-per-line names do ("S00738 - [CODE] Service").
+            # Each visit is led by its own contract's subject, when it has one.
             customer = t.partner_id.display_name
             name = t.name or ""
             if customer and customer.lower() not in name.lower():
-                return "%s — %s" % (customer, name) if name else customer
-            return name or customer or ""
+                title = "%s — %s" % (customer, name) if name else customer
+            else:
+                title = name or customer or ""
+            subject = subject_of(t)
+            return "%s — %s" % (subject, title) if subject and title else (subject or title)
 
         by_day = {}
         for t in tasks:
@@ -216,10 +223,14 @@ class FmSupervisorDashboard(models.AbstractModel):
 
         # Filter option lists
         technicians = [{"id": u.id, "name": u.name} for u in tasks.mapped("user_ids").sorted("name")]
+        # Every active branch, whatever company owns its record: a branch's
+        # visits can sit in another company (Dubai's record is on the Dubai
+        # company while its jobs are on the main one), and a newly added
+        # branch must show up here without any code change.
         branches = []
         if "fm.branch" in self.env:
             branches = [{"id": b.id, "name": b.name}
-                        for b in self.env["fm.branch"].sudo().search([("company_id", "in", companies.ids)])]
+                        for b in self.env["fm.branch"].sudo().search([])]
         # The client's 16 services first, in their catalogue's order. Any
         # other service line is offered only when something actually uses
         # it, so the list reads like the catalogue without hiding data.
@@ -321,7 +332,7 @@ class FmSupervisorDashboard(models.AbstractModel):
         sheet.write(1, 0, " · ".join("%s: %s" % f for f in filters[1:]))
         # Minimum widths; text columns grow to their longest value below.
         # Every header also needs room for its filter arrow.
-        cols = [("Date", 14), ("Day", 7), ("Time", 11), ("Status", 13), ("Customer", 14), ("Visit", 14),
+        cols = [("Date", 14), ("Day", 7), ("Time", 11), ("Status", 13), ("Contract Subject", 20), ("Customer", 14), ("Visit", 14),
                 ("Technician", 14), ("Service", 12), ("Branch", 12), ("Work Type", 13), ("Severity", 12),
                 ("Time Slot", 13), ("Stage", 12), ("Asset", 10), ("Contract", 12)]
         widths = [max(width, len(name) + 5) for name, width in cols]
@@ -337,6 +348,7 @@ class FmSupervisorDashboard(models.AbstractModel):
                 # grid agree.
                 (ev["day"], day_fmt), (ev["day"].strftime("%a"), cell),
                 (when if when else "", time_fmt), (ev["status_label"], status_fmt.get(ev["status"], cell)),
+                (t.fm_contract_subject or "" if "fm_contract_subject" in t._fields else "", cell),
                 (t.partner_id.display_name or "", cell), (t.name or "", cell),
                 (", ".join(t.user_ids.mapped("name")) or "Unassigned", cell),
                 (label(t, "fm_service_line") or (label(order, "fm_service_line") if order else ""), cell),
