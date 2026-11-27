@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="fm_command_centre.BudgetHead">
+        <div class="o_cc_brandbar">
+            <img t-att-src="'/web/image/res.company/' + d.company_id + '/logo'" alt="" class="o_cc_logo_sm"/>
+            <span class="o_cc_eyebrow">BUDGET DASHBOARD</span>
+        </div>
+        <div class="o_cc_head">
+            <span class="o_cc_num" t-esc="n"/>
+            <h2 t-esc="title"/>
+        </div>
+        <p class="o_cc_sub" t-esc="sub"/>
+    </t>
+
+    <t t-name="fm_command_centre.BudgetFooter">
+        <div class="o_cc_footer">
+            <span t-esc="d.tagline"/>
+            <span>Budget Dashboard · <t t-esc="page"/> / 6</span>
+        </div>
+    </t>
+
+    <t t-name="fm_command_centre.LocLegend">
+        <div class="o_cc_legend o_cc_legend_wrap">
+            <span t-foreach="d.locations" t-as="l" t-key="l.key" t-att-class="'o_cc_lg ' + locClass(l_index)" t-esc="l.label"/>
+        </div>
+    </t>
+
+    <t t-name="fm_command_centre.BudgetDashboard">
+        <div class="o_cc_root o_cc_budget">
+            <div class="o_cc_toolbar d-print-none">
+                <div class="o_cc_month">
+                    <button class="btn btn-light" t-on-click="() => this.shiftPlan(-1)" title="Previous plan year">‹</button>
+                    <span class="o_cc_period" t-esc="state.data ? state.data.period : '…'"/>
+                    <button class="btn btn-light" t-on-click="() => this.shiftPlan(1)" title="Next plan year">›</button>
+                </div>
+                <select class="form-select o_cc_service" t-on-change="onLocationChange">
+                    <option value="" t-att-selected="!state.location">All locations</option>
+                    <t t-if="state.data">
+                        <option t-foreach="state.data.location_options" t-as="lo" t-key="lo.key"
+                                t-att-value="lo.key" t-att-selected="state.location === lo.key" t-esc="lo.label"/>
+                    </t>
+                </select>
+                <div class="o_cc_break"/>
+                <div class="o_cc_sections" role="tablist">
+                    <t t-foreach="sectionList" t-as="sec" t-key="sec.key">
+                        <button t-att-class="'o_cc_sec' + (state.section === sec.key ? ' active' : '')"
+                                t-on-click="() => this.selectSection(sec.key)">
+                            <span class="o_cc_sec_num" t-esc="sec.num"/> <t t-esc="sec.label"/>
+                        </button>
+                    </t>
+                    <button t-att-class="'o_cc_sec' + (state.section === 'all' ? ' active' : '')"
+                            t-on-click="() => this.selectSection('all')">All</button>
+                </div>
+                <div class="o_cc_tools">
+                    <span t-if="state.loading" class="o_cc_loading"><i class="fa fa-circle-o-notch fa-spin"/> Loading…</span>
+                    <span t-elif="state.data" class="text-muted small">Updated <t t-esc="state.data.generated"/></span>
+                    <button class="btn btn-light" t-on-click="() => this.load()" title="Refresh"><i class="fa fa-refresh"/></button>
+                    <button class="btn btn-primary" t-on-click="print"><i class="fa fa-print"/> Print / PDF</button>
+                </div>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger m-3" t-esc="state.error"/>
+
+            <div t-if="state.data and !state.data.has" class="o_cc_pages">
+                <section class="o_cc_page">
+                    <p class="o_cc_empty">No budget is entered for <t t-esc="state.data.period"/><t t-if="state.data.location"> (<t t-esc="state.data.location_label"/>)</t>. Add it under CEO Dashboard → Configuration → Budget.</p>
+                </section>
+            </div>
+
+            <div t-if="state.data and state.data.has" class="o_cc_pages" t-att-class="{'o_cc_busy': state.loading, 'o_cc_single': state.section !== 'all'}">
+                <t t-set="d" t-value="state.data"/>
+
+                <!-- ============ COVER ============ -->
+                <section class="o_cc_page o_cc_cover">
+                  <div class="o_cc_cover_left">
+                    <img t-att-src="'/web/image/res.company/' + d.company_id + '/logo'" alt="" class="o_cc_logo"/>
+                    <div class="o_cc_pill">BUDGET DASHBOARD</div>
+                    <h1>One Budget, <span>Every Branch</span></h1>
+                    <p class="o_cc_lead">Planned spending for <t t-esc="d.period"/>, month by month<t t-if="d.location">, for <t t-esc="d.location_label"/></t><t t-else="">, for every branch</t>, against what is booked in Odoo.</p>
+                    <div class="o_cc_chips">
+                        <span>📅 <t t-esc="d.period"/></span>
+                        <span t-if="d.location" class="o_cc_chip_service">📍 <t t-esc="d.location_label"/></span>
+                        <span t-else="">📍 <t t-esc="d.uae_count"/> branches<t t-if="d.has_pakistan"> + Pakistan</t></span>
+                        <span>🗂️ <t t-esc="d.groups.length"/> cost groups</span>
+                        <span class="o_cc_chip_odoo">🟣 Source: Budget Sheet + Odoo</span>
+                    </div>
+                  </div>
+                  <div class="o_cc_cover_right">
+                    <div class="o_cc_hero" t-on-click="() => this.open(d.cover.drill)">
+                        <div class="o_cc_hero_top">
+                            <div>
+                                <div class="o_cc_hero_label">TOTAL BUDGET · <t t-esc="d.month_count"/> MONTHS</div>
+                                <div class="o_cc_hero_value">AED <t t-esc="k(d.cover.total)"/></div>
+                            </div>
+                            <div class="text-end">
+                                <div class="o_cc_hero_target">Average per month</div>
+                                <div class="o_cc_hero_ach">AED <t t-esc="k(d.cover.avg)"/></div>
+                            </div>
+                        </div>
+                        <div class="o_cc_split">
+                            <div class="o_cc_split_amc" t-att-style="'flex:' + Math.max(d.cover.payroll, 0.0001)">👥 Payroll · AED <t t-esc="k(d.cover.payroll)"/> · <t t-esc="pct(d.cover.payroll_share)"/></div>
+                            <div class="o_cc_split_cash" t-att-style="'flex:' + Math.max(d.cover.other, 0.0001)">🧾 Other costs · AED <t t-esc="k(d.cover.other)"/> · <t t-esc="pct(d.cover.other_share)"/></div>
+                        </div>
+                    </div>
+                    <div class="o_cc_tiles4">
+                        <div class="o_cc_tile"><b t-esc="k(d.cover.peak)"/><span>peak month</span><small t-esc="d.cover.peak_label"/></div>
+                        <div class="o_cc_tile"><b t-esc="k(d.cover.low)"/><span>lowest month</span><small t-esc="d.cover.low_label"/></div>
+                        <div class="o_cc_tile"><b t-esc="k(d.cover.top_loc_total)"/><span><t t-esc="d.cover.top_loc"/> budget</span><small>largest · <t t-esc="pct(d.cover.top_loc_share)"/> of total</small></div>
+                        <div class="o_cc_tile" t-on-click="() => this.selectSection('actual')">
+                            <b t-esc="d.actual.used === null ? '—' : pct(d.actual.used)"/><span>of budget used</span>
+                            <small><t t-esc="d.actual.months_to_date"/> month<t t-if="d.actual.months_to_date !== 1">s</t> to date</small>
+                        </div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- ============ 1 · MONTHLY BUDGET ============ -->
+                <section class="o_cc_page" t-if="showSection('monthly')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="1"/><t t-set="title" t-value="'Monthly Budget'"/>
+                        <t t-set="sub" t-value="'How much each month needs, split by branch.'"/>
+                    </t>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.cover.drill)"><b t-esc="aed(d.cover.total)"/><span>total, <t t-esc="d.month_count"/> months</span></div>
+                        <div class="o_cc_kpi o_cc_bg_blue"><b t-esc="aed(d.cover.avg)"/><span>average month</span></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="aed(d.cover.peak)"/><span>peak month</span><small t-esc="d.cover.peak_label"/></div>
+                        <div class="o_cc_kpi o_cc_bg_green"><b t-esc="aed(d.cover.low)"/><span>lowest month</span><small t-esc="d.cover.low_label"/></div>
+                    </div>
+                    <h3 class="o_cc_h3">📊 Budget by month (AED) · dashed line = monthly average</h3>
+                    <t t-call="fm_command_centre.LocLegend"/>
+                    <t t-set="sc" t-value="stackChart()"/>
+                    <svg class="o_cc_svg" t-att-viewBox="'0 0 ' + sc.W + ' ' + sc.H" preserveAspectRatio="xMidYMid meet">
+                        <text x="6" y="12" class="o_cc_axis">AED</text>
+                        <t t-foreach="sc.ticks" t-as="t" t-key="t_index">
+                            <line t-att-x1="sc.L" t-att-x2="sc.right" t-att-y1="t.y" t-att-y2="t.y" class="o_cc_grid"/>
+                            <text t-att-x="sc.L - 6" t-att-y="t.y + 4" text-anchor="end" class="o_cc_axis" t-esc="t.label"/>
+                        </t>
+                        <g t-foreach="sc.bars" t-as="b" t-key="b_index" class="o_cc_click" t-on-click="() => this.open(b.drill)">
+                            <rect t-foreach="b.segs" t-as="s" t-key="s_index" t-att-x="b.x" t-att-y="s.y" t-att-width="b.w" t-att-height="s.h" t-att-class="s.cls"/>
+                            <text t-att-x="b.cx" t-att-y="b.top - 6" text-anchor="middle" class="o_cc_endlabel" t-esc="b.total"/>
+                            <text t-att-x="b.cx" t-att-y="sc.H - 8" text-anchor="middle" class="o_cc_axis o_cc_axis_b" t-esc="b.label"/>
+                        </g>
+                        <line t-att-x1="sc.L" t-att-x2="sc.right" t-att-y1="sc.avgY" t-att-y2="sc.avgY" class="o_cc_avgline"/>
+                        <text t-att-x="sc.right + 6" t-att-y="sc.avgY - 4" class="o_cc_endlabel">Avg</text>
+                        <text t-att-x="sc.right + 6" t-att-y="sc.avgY + 12" class="o_cc_endlabel" t-esc="sc.avg"/>
+                    </svg>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Month</th><th t-foreach="d.locations" t-as="l" t-key="l.key" t-esc="l.label"/><th>Total</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.monthly" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-foreach="r.cells" t-as="c" t-key="c_index" t-esc="k(c)"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                            </tr>
+                            <tr class="o_cc_total">
+                                <td>Total</td>
+                                <td t-foreach="d.loc_totals" t-as="c" t-key="c_index" t-esc="k(c)"/>
+                                <td t-esc="k(d.cover.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="o_cc_note o_cc_note_orange">
+                        💡 <b><t t-esc="d.cover.peak_label"/> is the heaviest month</b> at AED <t t-esc="k(d.cover.peak)"/>, when yearly fees (licences, sponsor and visa fees) land; <t t-esc="d.cover.low_label"/> is the lightest at AED <t t-esc="k(d.cover.low)"/>.
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="2"/></t>
+                </section>
+
+                <!-- ============ 2 · WHERE THE MONEY GOES ============ -->
+                <section class="o_cc_page" t-if="showSection('groups')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="2"/><t t-set="title" t-value="'Where the Money Goes'"/>
+                        <t t-set="sub" t-value="'Every cost group over the ' + d.month_count + ' months.'"/>
+                    </t>
+                    <h3 class="o_cc_h3">🧭 Spending by cost group</h3>
+                    <div class="o_cc_hbars">
+                        <div class="o_cc_hbar" t-foreach="d.group_rows" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                            <span class="o_cc_hbar_label o_cc_strong" t-esc="r.label"/>
+                            <div class="o_cc_hbar_track">
+                                <div class="o_cc_hbar_fill" t-att-class="r_index ? 'o_cc_fill_orange' : 'o_cc_fill_navy'" t-att-style="'width:' + width(r.total, d.group_max * 1.25) + '%'"/>
+                                <span class="o_cc_hbar_val">AED <t t-esc="k(r.total)"/> · <t t-esc="pct(r.share)"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Cost group</th><th><t t-esc="d.month_count"/>-month total</th><th>Per month</th><th>Share</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.group_rows" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                                <td t-esc="k(r.per_month)"/>
+                                <td t-esc="pct(r.share, 1)"/>
+                            </tr>
+                            <tr class="o_cc_total"><td>Total</td><td t-esc="k(d.cover.total)"/><td t-esc="k(d.cover.avg)"/><td>100%</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="o_cc_note o_cc_note_orange" t-if="d.group_rows.length > 2">
+                        📌 <b><t t-esc="d.group_rows[0].label"/> is <t t-esc="pct(d.group_rows[0].share)"/> of the budget.</b> <t t-esc="d.group_rows[1].label"/> (AED <t t-esc="k(d.group_rows[1].total)"/>) and <t t-esc="d.group_rows[2].label.toLowerCase()"/> (AED <t t-esc="k(d.group_rows[2].total)"/>) come next.
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="3"/></t>
+                </section>
+
+                <!-- ============ 3 · BRANCH SCORECARD ============ -->
+                <section class="o_cc_page" t-if="showSection('score')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="3"/><t t-set="title" t-value="'Branch Scorecard'"/>
+                        <t t-set="sub" t-value="'Each location’s share of the budget, by cost group.'"/>
+                    </t>
+                    <div class="o_cc_loctiles">
+                        <div t-foreach="d.score" t-as="r" t-key="r.key" t-att-class="'o_cc_loctile ' + locClass(r_index)" t-on-click="() => this.open(r.drill)">
+                            <b t-esc="k(r.total)"/><span t-esc="r.label"/>
+                            <small><t t-esc="k(r.per_month)"/> a month · <t t-esc="pct(r.share)"/></small>
+                        </div>
+                    </div>
+                    <h3 class="o_cc_h3">🏢 Budget by branch (AED), split by cost group</h3>
+                    <div class="o_cc_legend o_cc_legend_wrap">
+                        <span t-foreach="d.groups" t-as="g" t-key="g.key" t-att-class="'o_cc_lg ' + grpClass(g_index)" t-esc="g.label"/>
+                    </div>
+                    <t t-set="smax" t-value="maxOf(d.score, 'total')"/>
+                    <div class="o_cc_stack">
+                        <div class="o_cc_stack_row" t-foreach="d.score" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                            <span class="o_cc_stack_label" t-esc="r.label"/>
+                            <div class="o_cc_stack_track">
+                                <t t-foreach="r.cells" t-as="c" t-key="c_index">
+                                    <div t-if="c > 0" t-att-class="'o_cc_seg ' + grpClass(c_index)" t-att-style="'width:' + (100 * c / (smax * 1.2)) + '%'" t-att-title="d.groups[c_index].label + ': ' + k(c)">
+                                        <t t-if="c / smax > 0.07" t-esc="k(c)"/>
+                                    </div>
+                                </t>
+                                <span class="o_cc_stack_tot">AED <t t-esc="k(r.total)"/></span>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th t-foreach="d.groups" t-as="g" t-key="g.key" t-esc="g.label"/><th>Total</th><th>Share</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.score" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-foreach="r.cells" t-as="c" t-key="c_index" t-esc="c ? k(c) : '—'"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                                <td t-esc="pct(r.share)"/>
+                            </tr>
+                            <tr class="o_cc_total">
+                                <td>Total</td>
+                                <td t-foreach="d.group_totals" t-as="c" t-key="c_index" t-esc="k(c)"/>
+                                <td t-esc="k(d.cover.total)"/><td>100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="o_cc_note o_cc_note_green" t-if="d.score.length > 1">
+                        🏆 <b><t t-esc="d.cover.top_loc"/> carries <t t-esc="pct(d.cover.top_loc_share)"/> of the budget.</b>
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="4"/></t>
+                </section>
+
+                <!-- ============ 4 · TEAM & PAYROLL ============ -->
+                <section class="o_cc_page" t-if="showSection('team')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="4"/><t t-set="title" t-value="'Team &amp; Payroll'"/>
+                        <t t-set="sub" t-value="'Monthly payroll by branch and visas that need renewing.'"/>
+                    </t>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.team.emp_drill)"><b t-esc="d.team.staff"/><span>employees in Odoo</span><small t-if="d.team.unassigned">(<t t-esc="d.team.unassigned"/> without a branch)</small></div>
+                        <div class="o_cc_kpi o_cc_bg_blue"><b t-esc="aed(d.team.per_month)"/><span>payroll a month (plan)</span><small>AED <t t-esc="k(d.cover.payroll)"/> over <t t-esc="d.month_count"/> months</small></div>
+                        <div class="o_cc_kpi o_cc_bg_red"><b t-esc="d.team.expired"/><span>visas already expired</span><small>renew now</small></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="d.team.due"/><span>visas due in the plan period</span></div>
+                    </div>
+                    <h3 class="o_cc_h3">👥 Payroll plan by branch</h3>
+                    <div class="o_cc_hbars">
+                        <div class="o_cc_hbar" t-foreach="d.team.rows" t-as="r" t-key="r.key">
+                            <span class="o_cc_hbar_label o_cc_strong" t-esc="r.label"/>
+                            <div class="o_cc_hbar_track">
+                                <div class="o_cc_hbar_fill o_cc_fill_navy" t-att-style="'width:' + width(r.per_month, d.team.max * 1.3) + '%'"/>
+                                <span class="o_cc_hbar_val"><t t-esc="amt(r.per_month)"/> / month</span>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th>Staff in Odoo</th><th>Per month (AED)</th><th><t t-esc="d.month_count"/> months</th><th>Share</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.team.rows" t-as="r" t-key="r.key">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-esc="r.staff === null ? '—' : r.staff"/>
+                                <td t-esc="num(r.per_month)"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                                <td t-esc="pct(r.share)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3 class="o_cc_h3">🛂 Visa renewals: expired or due before the plan ends</h3>
+                    <table class="o_cc_table" t-if="d.team.visas.length">
+                        <thead><tr><th>Name</th><th>Works in</th><th>Visa expiry</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.team.visas" t-as="v" t-key="v.id" t-on-click="() => this.open({model: 'hr.employee', domain: [['id', '=', v.id]], name: v.name})">
+                                <td class="o_cc_strong" t-esc="v.name"/>
+                                <td t-esc="v.branch or '—'"/>
+                                <td t-esc="v.expiry"/>
+                                <td>
+                                    <b t-if="v.status === 'expired'" class="o_cc_bad">! Expired</b>
+                                    <b t-elif="v.status === 'soon'" class="o_cc_warn">• Due in <t t-esc="v.days"/> d</b>
+                                    <span t-else="" class="text-muted">Due <t t-esc="v.due"/></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-else="">No visa expiry dates fall in the plan period. Visa expiry is read from each employee (Employees → Private Information → Visa Expiration Date).</p>
+                    <p class="o_cc_tablenote">Staff are counted from Employees by their FM branch; payroll is the budget plan.</p>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="5"/></t>
+                </section>
+
+                <!-- ============ 5 · BUDGET VS ACTUAL ============ -->
+                <section class="o_cc_page" t-if="showSection('actual')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="5"/><t t-set="title" t-value="'Budget vs Actual'"/>
+                        <t t-set="sub" t-value="'The plan against the expenses booked in Odoo, month by month to date.'"/>
+                    </t>
+                    <t t-set="a" t-value="d.actual"/>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="k(a.budget)"/><span>budget to date</span><small><t t-esc="a.months_to_date"/> month<t t-if="a.months_to_date !== 1">s</t></small></div>
+                        <div class="o_cc_kpi o_cc_bg_blue" t-on-click="() => this.open(a.drill)"><b t-esc="k(a.actual)"/><span>actual expenses</span><small>booked in Odoo</small></div>
+                        <div t-attf-class="o_cc_kpi {{a.variance &lt; 0 ? 'o_cc_bg_red' : 'o_cc_bg_green'}}"><b t-esc="k(Math.abs(a.variance || 0))"/><span t-esc="(a.variance || 0) &lt; 0 ? 'over budget' : 'under budget'"/></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="pct(a.used)"/><span>of budget used</span></div>
+                    </div>
+                    <h3 class="o_cc_h3">📊 Budget and actual by month (AED)</h3>
+                    <div class="o_cc_legend"><span class="o_cc_lg_amc">Budget</span><span class="o_cc_lg_cash">Actual</span></div>
+                    <t t-set="pc" t-value="pairChart()"/>
+                    <svg class="o_cc_svg" t-att-viewBox="'0 0 ' + pc.W + ' ' + pc.H" preserveAspectRatio="xMidYMid meet">
+                        <t t-foreach="pc.ticks" t-as="t" t-key="t_index">
+                            <line t-att-x1="pc.L" t-att-x2="pc.right" t-att-y1="t.y" t-att-y2="t.y" class="o_cc_grid"/>
+                            <text t-att-x="pc.L - 6" t-att-y="t.y + 4" text-anchor="end" class="o_cc_axis" t-esc="t.label"/>
+                        </t>
+                        <g t-foreach="pc.bars" t-as="b" t-key="b_index" class="o_cc_click" t-on-click="() => this.open(b.drill)">
+                            <rect t-att-x="b.bx" t-att-y="b.by" t-att-width="pc.bw" t-att-height="b.bh" t-att-class="b.future ? 'o_cc_bar_future' : 'o_cc_bar_amc'"/>
+                            <rect t-if="!b.future" t-att-x="b.ax" t-att-y="b.ay" t-att-width="pc.bw" t-att-height="b.ah" t-att-class="b.over ? 'o_cc_bar_red' : 'o_cc_bar_orange'"/>
+                            <text t-att-x="b.cx" t-att-y="pc.H - 8" text-anchor="middle" class="o_cc_axis o_cc_axis_b" t-esc="b.label"/>
+                        </g>
+                    </svg>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Month</th><th>Budget</th><th>Actual</th><th>Variance</th><th>Used</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="a.rows" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)" t-att-class="r.future ? 'o_cc_future' : ''">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-esc="k(r.budget)"/>
+                                <td t-esc="r.future ? '—' : k(r.actual)"/>
+                                <td t-att-class="r.variance !== null and r.variance &lt; 0 ? 'o_cc_bad o_cc_strong' : ''" t-esc="r.future ? 'not yet' : signed(r.variance)"/>
+                                <td t-esc="r.future ? '' : pct(r.used)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_tablenote">Actual = expense-account lines (draft and posted) by accounting date, as on the CEO Dashboard. Variance = budget − actual; negative means over budget.</p>
+                    <div class="o_cc_note o_cc_note_orange" t-if="a.branch_note === 'pakistan'">ℹ️ The Pakistan office's costs are not booked in this Odoo database, so it has no actuals here.</div>
+                    <div class="o_cc_note o_cc_note_orange" t-elif="a.branch_note === 'branch'">ℹ️ Only expenses booked to the <b t-esc="d.location_label"/> branch count. Costs entered without a branch are left out.</div>
+                    <div class="o_cc_note o_cc_note_orange" t-if="a.used !== null and a.used &lt; 20">
+                        ⚠️ <b>Only <t t-esc="pct(a.used)"/> of the budget shows as spent</b> because most costs (payroll, rent, fuel) are not yet entered in Odoo. The comparison becomes meaningful once they are.
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="6"/></t>
+                </section>
+            </div>
+        </div>
+    </t>
+</templates>
