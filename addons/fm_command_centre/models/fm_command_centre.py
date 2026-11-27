@@ -44,6 +44,20 @@ BRANCH_ORDER = ['ajman', 'sharjah', 'dubai', 'fujairah']
 DASH_TO_LINE = {'tank': 'water_tank', 'ac': 'hvac'}
 LINE_TO_DASH = {v: k for k, v in DASH_TO_LINE.items()}
 PAYROLL_WORDS = ('payroll', 'wage', 'salar', 'staff cost', 'gratuity')
+# Lab tests and attestation are fees paid out on the customer's behalf and
+# recharged: an expense category, not a service (client, 27 Nov 2026). Their
+# invoice lines stay on the invoice and in receivables, but not in revenue.
+RECHARGED = ('lab',)
+# The client's own service list by emirate ("Our Services by Emirate").
+CLIENT_SERVICES = ['pest', 'termite', 'fumigation', 'tank', 'sofa', 'carpet',
+                   'mattress', 'villa', 'flat', 'painting', 'ac', 'landscaping',
+                   'tile', 'handyman', 'electrical', 'plumbing']
+OFFERED = {
+    'ajman': CLIENT_SERVICES,
+    'sharjah': CLIENT_SERVICES[:11],
+    'dubai': CLIENT_SERVICES[:11],
+    'fujairah': CLIENT_SERVICES[:3],
+}
 
 
 def _d(value):
@@ -103,6 +117,7 @@ class FmCommandCentre(models.AbstractModel):
                 'id': b.id,
                 'name': (b.name or '').split(' — ')[-1],
                 'manager': b.manager_id.name or '',
+                'emirate': b.emirate or '',
                 'amc_target': b.amc_monthly_target or 0.0,
                 'cash_target': b.cash_monthly_target or 0.0,
             })
@@ -138,6 +153,7 @@ class FmCommandCentre(models.AbstractModel):
         used = {v for (v,) in self.env['account.move']._read_group(
             [('fm_cc_service', '!=', False)], ['fm_cc_service'], [])}
         keys += [k for k, _l in SERVICES if k not in keys and k in used]
+        keys = [k for k in keys if k not in RECHARGED]
         return [{'key': k, 'label': line_labels.get(DASH_TO_LINE.get(k, k))
                  or SERVICE_LABELS[k]} for k in keys]
 
@@ -341,6 +357,27 @@ class FmCommandCentre(models.AbstractModel):
                 row[stream + '_jobs'] += count
                 totals[stream + '_jobs'] += count
 
+        # recharged fees (lab tests, attestation) are not revenue
+        Line = self.env['account.move.line']
+        rech_dom = [('move_id', 'any', domain), ('display_type', '=', 'product'),
+                    ('fm_cc_service', 'in', RECHARGED)]
+        recharged = 0.0
+        for branch, stream, balance in Line._read_group(
+                rech_dom, ['fm_cc_branch_id', 'fm_cc_stream'], ['balance:sum']):
+            amount = -(balance or 0.0)
+            stream = stream or 'cash'
+            by_branch[branch.id or False][stream] -= amount
+            totals[stream] -= amount
+            recharged += amount
+        # an invoice that is only a recharged fee is not a job
+        for branch, stream, count in Move._read_group(
+                domain + [('move_type', '=', 'out_invoice'),
+                          ('fm_cc_service', 'in', RECHARGED)],
+                ['fm_cc_branch_id', 'fm_cc_stream'], ['__count']):
+            stream = stream or 'cash'
+            by_branch[branch.id or False][stream + '_jobs'] -= count
+            totals[stream + '_jobs'] -= count
+
         # 12 months ending with the selected one
         m12_start = ctx['start'] - relativedelta(months=11)
         months = []
@@ -359,8 +396,16 @@ class FmCommandCentre(models.AbstractModel):
             pos = index.get((mon.year, mon.month))
             if pos is not None:
                 months[pos][stream or 'cash'] += amount or 0.0
+        for mon, stream, balance in Line._read_group(
+                [('move_id', 'any', self._inv_domain(ctx['states'], m12_start, ctx['end'])),
+                 ('display_type', '=', 'product'), ('fm_cc_service', 'in', RECHARGED)],
+                ['invoice_date:month', 'fm_cc_stream'], ['balance:sum']):
+            pos = index.get((mon.year, mon.month)) if mon else None
+            if pos is not None:
+                months[pos][stream or 'cash'] += balance or 0.0
 
-        return dict(totals, by_branch=by_branch, months=months, domain=domain)
+        return dict(totals, by_branch=by_branch, months=months, domain=domain,
+                    recharged=recharged)
 
     # ------------------------------------------------------------------
     # 1 · AMC vs Cash
@@ -899,19 +944,28 @@ class FmCommandCentre(models.AbstractModel):
                   ('display_type', '=', 'product')]
         data = defaultdict(lambda: {'amc': 0.0, 'cash': 0.0, 'branches': defaultdict(
             lambda: {'amc': 0.0, 'cash': 0.0})})
+        recharged = 0.0
         for service, stream, branch, balance in Line._read_group(
                 domain, ['fm_cc_service', 'fm_cc_stream', 'fm_cc_branch_id'],
                 ['balance:sum']):
             amount = -(balance or 0.0)
             key = service or 'other'
+            if key in RECHARGED:
+                recharged += amount
+                continue
             stream = stream or 'cash'
             data[key][stream] += amount
             data[key]['branches'][branch.id or False][stream] += amount
         grand = sum(v['amc'] + v['cash'] for v in data.values())
+        # every service the client offers is listed, sold this month or not
+        if not self._svc():
+            for key in CLIENT_SERVICES:
+                data[key]
+        order = {k: i for i, k in enumerate(CLIENT_SERVICES)}
         rows = []
         for key, v in data.items():
             total = v['amc'] + v['cash']
-            if not total:
+            if not total and key not in order:
                 continue
             rows.append({
                 'key': key, 'label': SERVICE_LABELS.get(key, 'Other'),
@@ -929,14 +983,19 @@ class FmCommandCentre(models.AbstractModel):
                           'domain': domain + [('fm_cc_service', '=', key)],
                           'name': SERVICE_LABELS.get(key, 'Other')},
             })
-        rows.sort(key=lambda r: -r['total'])
+        rows.sort(key=lambda r: (-r['total'], order.get(r['key'], 99)))
 
-        columns = [{'id': b['id'], 'key': str(b['id']), 'name': b['name']}
+        columns = [{'id': b['id'], 'key': str(b['id']), 'name': b['name'],
+                    'offered': OFFERED.get(b['emirate'])}
                    for b in ctx['branches']]
         if any('False' in r['branches'] for r in rows):
-            columns.append({'id': False, 'key': 'False', 'name': 'Unassigned'})
+            columns.append({'id': False, 'key': 'False', 'name': 'Unassigned', 'offered': None})
         for col in columns:
-            col['services'] = sum(1 for r in rows if col['key'] in r['branches'])
+            col['selling'] = sum(1 for r in rows if col['key'] in r['branches'])
+            col['services'] = len(col['offered']) if col['offered'] is not None else col['selling']
+        for r in rows:
+            r['offered_in'] = {c['key']: c['offered'] is None or r['key'] in c['offered']
+                               for c in columns}
             col['total'] = sum(r['branches'].get(col['key'], {}).get('total', 0.0)
                                for r in rows)
 
@@ -949,12 +1008,13 @@ class FmCommandCentre(models.AbstractModel):
                             'share': self._pct(t3, grand, 0),
                             'mostly_amc': amc3 >= t3 / 2}
             cashy = [r['label'] for r in rows if (r['amc_share'] or 0) <= 15 and r['total']]
+            notes['unsold'] = [r['label'] for r in rows if not r['total']]
             notes['cashy'] = cashy[:4]
             real_cols = [c for c in columns if c['id'] and c['services']]
             if real_cols:
-                few = min(real_cols, key=lambda c: c['services'])
-                notes['fewest'] = {'name': few['name'], 'services': few['services'],
-                                   'total': few['total']}
+                few = min(real_cols, key=lambda c: c['selling'])
+                notes['fewest'] = {'name': few['name'], 'services': few['selling'],
+                                   'offered': few['services'], 'total': few['total']}
                 only = []
                 for r in rows:
                     present = [c for c in real_cols if c['key'] in r['branches']]
@@ -965,7 +1025,7 @@ class FmCommandCentre(models.AbstractModel):
                         1 for x, _l in only if x == n))
                     notes['exclusive'] = {'name': name,
                                           'services': [l for n, l in only if n == name]}
-        return {'rows': rows, 'columns': columns, 'grand': grand,
+        return {'rows': rows, 'columns': columns, 'grand': grand, 'recharged': recharged,
                 'max': max([r['total'] for r in rows] + [1]), 'notes': notes}
 
     # ------------------------------------------------------------------
