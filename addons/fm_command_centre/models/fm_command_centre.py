@@ -1089,7 +1089,9 @@ class FmCommandCentre(models.AbstractModel):
         target = self.env.company.fm_cc_margin_target or 0.0
         growing = sorted([r for r in rows if r['delta'] and r['delta'] > 0],
                          key=lambda r: -r['delta'])[:2]
+        budget = self._budget(ctx, total)
         return {
+            'budget': budget,
             'total': total, 'delta': self._delta(total, prev_total),
             'profit': profit, 'margin': margin, 'margin_target': target,
             'margin_gap': round(target - margin, 1) if margin is not None and target else None,
@@ -1098,6 +1100,45 @@ class FmCommandCentre(models.AbstractModel):
             'max': max([r['amount'] for r in rows] + [1]),
             'drill': {'model': 'account.move.line', 'domain': cur_dom,
                       'name': 'Expenses this month'},
+        }
+
+    def _budget(self, ctx, actual):
+        """Budget vs actual for the month: the client's budget sheet
+        (fm.cc.budget) against the expenses booked. Actual is the month's
+        total only -- expenses carry no location, so it is not split."""
+        Budget = self.env['fm.cc.budget']
+        labels = dict(Budget._fields['location'].selection)
+        domain = [('month', '=', ctx['start'])]
+        location = False
+        if self._br():
+            name = (self.env['fm.branch'].browse(self._br()).name or '').casefold()
+            location = next((k for k in labels if k in name), False)
+            if location:
+                domain.append(('location', '=', location))
+        by_loc = {}
+        for line in Budget.search(domain):
+            row = by_loc.setdefault(line.location, {
+                'key': line.location, 'label': labels.get(line.location, line.location),
+                'payroll': 0.0, 'other': 0.0, 'total': 0.0})
+            row['payroll' if line.cost_group == 'payroll' else 'other'] += line.amount
+            row['total'] += line.amount
+        order = [k for k, _l in Budget._fields['location'].selection]
+        rows = sorted(by_loc.values(), key=lambda r: order.index(r['key']))
+        planned = sum(r['total'] for r in rows)
+        if not planned:
+            return {'has': False}
+        return {
+            'has': True,
+            'planned': planned,
+            'payroll': sum(r['payroll'] for r in rows),
+            'other': sum(r['other'] for r in rows),
+            'actual': actual,
+            'variance': planned - actual,
+            'used': self._pct(actual, planned, 0),
+            'rows': rows,
+            'branch_note': bool(self._br()),
+            'drill': {'model': 'fm.cc.budget', 'domain': domain,
+                      'name': 'Budget %s' % ctx['start'].strftime('%b %Y')},
         }
 
     # ------------------------------------------------------------------

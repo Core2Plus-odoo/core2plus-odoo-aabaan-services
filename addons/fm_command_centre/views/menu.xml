@@ -50,6 +50,12 @@
               action="action_cc_sales_targets"
               sequence="20"/>
 
+    <menuitem id="menu_cc_budget"
+              name="Budget"
+              parent="menu_command_centre_config"
+              action="action_cc_budget"
+              sequence="25"/>
+
     <menuitem id="menu_cc_products"
               name="Service Classification"
               parent="menu_command_centre_config"

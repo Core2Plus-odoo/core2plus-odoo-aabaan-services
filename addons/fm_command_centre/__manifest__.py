@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'FM Command Centre',
-    'version': '19.0.3.4.0',
+    'version': '19.0.3.5.0',
     'category': 'Reporting',
     'summary': 'CEO Dashboard — AMC contracts and cash sales side by side, '
                'per branch, live from Odoo',
@@ -46,6 +46,7 @@ under Command Centre → Configuration. The page prints to PDF.
         'security/ir.model.access.csv',
         'views/config_views.xml',
         'views/menu.xml',
+        'data/budget_2026_27.xml',
     ],
     'assets': {
         'web.assets_backend': [

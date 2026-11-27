@@ -564,6 +564,28 @@
                         <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="pct(d.expenses.margin, 1)"/><span>net margin</span><small t-if="d.expenses.margin_target">target <t t-esc="pct(d.expenses.margin_target)"/></small></div>
                         <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="pct(d.expenses.payroll_share)"/><span>payroll share</span><small>of total spend</small></div>
                     </div>
+                    <t t-if="d.expenses.budget and d.expenses.budget.has">
+                        <h3 class="o_cc_h3">🎯 Budget vs actual</h3>
+                        <div class="o_cc_kpis">
+                            <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.expenses.budget.drill)"><b t-esc="k(d.expenses.budget.planned)"/><span>budget this month</span><small>payroll <t t-esc="k(d.expenses.budget.payroll)"/> · other <t t-esc="k(d.expenses.budget.other)"/></small></div>
+                            <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.expenses.drill)"><b t-esc="k(d.expenses.budget.actual)"/><span>actual expenses</span><small>booked in Odoo</small></div>
+                            <div t-attf-class="o_cc_kpi {{d.expenses.budget.variance &lt; 0 ? 'o_cc_bg_orange' : 'o_cc_bg_green'}}"><b t-esc="k(Math.abs(d.expenses.budget.variance))"/><span t-esc="d.expenses.budget.variance &lt; 0 ? 'over budget' : 'under budget'"/></div>
+                            <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="pct(d.expenses.budget.used)"/><span>of budget used</span></div>
+                        </div>
+                        <table class="o_cc_table">
+                            <thead><tr><th>Location</th><th>Payroll</th><th>Other costs</th><th>Budget (AED)</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="d.expenses.budget.rows" t-as="r" t-key="r.key" t-on-click="() => this.open(d.expenses.budget.drill)">
+                                    <td class="o_cc_strong" t-esc="r.label"/>
+                                    <td t-esc="k(r.payroll)"/><td t-esc="k(r.other)"/>
+                                    <td class="o_cc_strong" t-esc="k(r.total)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="o_cc_note o_cc_note_orange" t-if="d.expenses.budget.actual &lt; d.expenses.budget.planned * 0.2">
+                            ⚠️ <b>Only <t t-esc="pct(d.expenses.budget.used)"/> of the budget shows as spent</b> because most expenses (payroll, rent, fuel) are not yet entered in Odoo. Profit and margin above are overstated until they are.
+                        </div>
+                    </t>
                     <h3 class="o_cc_h3">📊 Where the money goes</h3>
                     <div class="o_cc_hbars">
                         <div class="o_cc_hbar" t-foreach="d.expenses.rows" t-as="r" t-key="r_index" t-on-click="() => this.open(r.drill)">
