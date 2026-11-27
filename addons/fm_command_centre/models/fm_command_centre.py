@@ -589,6 +589,7 @@ class FmCommandCentre(models.AbstractModel):
                       ('state', 'in', ('in_process', 'paid', 'posted')),
                       ('date', '>=', _d(start)), ('date', '<', _d(end))]
         modes = {'cash': 0.0, 'card': 0.0, 'bank': 0.0}
+        mode_ids = {'cash': [], 'card': [], 'bank': []}
         same_day = set()
         paid_jobs = set()
         pay_ids = []
@@ -612,6 +613,7 @@ class FmCommandCentre(models.AbstractModel):
             else:
                 mode = 'bank'
             modes[mode] += pay.amount
+            mode_ids[mode].append(pay.id)
             for inv in cash_inv:
                 paid_jobs.add(inv.id)
                 if inv.invoice_date and inv.invoice_date == pay.date:
@@ -619,7 +621,10 @@ class FmCommandCentre(models.AbstractModel):
         mode_total = sum(modes.values())
         payment_modes = [
             {'key': key, 'label': label, 'amount': modes[key],
-             'share': self._pct(modes[key], mode_total, 0)}
+             'share': self._pct(modes[key], mode_total, 0),
+             'drill': {'model': 'account.payment',
+                       'domain': [('id', 'in', mode_ids[key])],
+                       'name': label} if mode_ids[key] else None}
             for key, label in (('cash', 'Cash'), ('card', 'Card'),
                                ('bank', 'Bank transfer'))]
 
@@ -914,7 +919,11 @@ class FmCommandCentre(models.AbstractModel):
                 'share': self._pct(total, grand),
                 'amc_share': self._pct(v['amc'], total, 0),
                 'branches': {str(b): {'total': x['amc'] + x['cash'],
-                                      'amc_share': self._pct(x['amc'], x['amc'] + x['cash'], 0)}
+                                      'amc_share': self._pct(x['amc'], x['amc'] + x['cash'], 0),
+                                      'drill': {'model': 'account.move.line',
+                                                'domain': domain + [('fm_cc_service', '=', key),
+                                                                    ('fm_cc_branch_id', '=', b)],
+                                                'name': SERVICE_LABELS.get(key, 'Other')}}
                              for b, x in v['branches'].items() if x['amc'] + x['cash']},
                 'drill': {'model': 'account.move.line',
                           'domain': domain + [('fm_cc_service', '=', key)],
