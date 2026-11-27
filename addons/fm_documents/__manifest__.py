@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "FM Documents",
-    "version": "19.0.3.8.1",
+    "version": "19.0.3.8.2",
     "category": "Facility Management",
     "summary": "Branded PDF documents — job sheet, quotation, contract, tax invoice",
     "description": """
