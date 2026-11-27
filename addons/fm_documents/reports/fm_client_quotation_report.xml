@@ -71,7 +71,7 @@
                     <t t-if="qline.kind == 'price_table'">
                         <t t-call="fm_documents.report_fm_client_quotation_table"/>
                     </t>
-                    <div t-else="" t-out="o._fm_render_agreement_html(qline.body_html, values)"/>
+                    <div t-else="" t-out="o._fm_render_agreement_html(o._fm_payment_terms_body(qline.name, qline.body_html), values)"/>
                 </t>
             </div>
         </t>

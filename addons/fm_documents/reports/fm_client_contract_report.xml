@@ -58,7 +58,7 @@
                     <!-- The formatted body carries the heading as the document
                          writes it, and the space above it; a line typed in later
                          without one prints its heading and plain body. -->
-                    <div t-elif="aline.body_html" t-out="o._fm_render_agreement_html(aline.body_html)"/>
+                    <div t-elif="aline.body_html" t-out="o._fm_render_agreement_html(o._fm_payment_terms_body(aline.name, aline.body_html))"/>
                     <div t-else="" style="margin-top:10px;">
                         <div t-if="aline.kind == 'article'" style="font-weight:bold;text-decoration:underline;"
                              t-out="aline.name"/>

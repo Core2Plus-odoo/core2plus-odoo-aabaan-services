@@ -157,6 +157,31 @@ class SaleOrder(models.Model):
         return [part for part in (customer.street, customer.street2, customer.city,
                                   customer.state_id.name) if part]
 
+    def _fm_payment_terms_body(self, name, body_html):
+        """A payment-terms article with the order's Payment Terms in it.
+
+        Most quotation and agreement templates were imported with the terms
+        typed into the article ("One Time Payment", "Payments 50 % in
+        advance ..."), so changing Payment Terms on the order never reached
+        the PDF. When the order states its terms, the article's terms
+        paragraph is replaced by them; its heading and any "Cheque made in
+        favor to" line are kept. An order with no terms keeps the
+        template's wording."""
+        self.ensure_one()
+        body = str(body_html or "")
+        if ("payment" not in (name or "").lower() or "{{PAYMENT_TERMS}}" in body
+                or not self._fm_client_payment_terms()):
+            return body_html
+        paras = list(re.finditer(r"(<p\b[^>]*>)(.*?)(</p>)", body, flags=re.S))
+        if len(paras) < 2:
+            return body_html
+        terms = paras[1]
+        cheque = re.search(r"Cheque made in favou?r to[^<]*", terms.group(2))
+        new = terms.group(1) + "{{PAYMENT_TERMS}}" + terms.group(3)
+        if cheque:
+            new += '<p style="margin:0;">%s</p>' % cheque.group(0).strip()
+        return Markup(body[:terms.start()] + new + body[terms.end():])
+
     def _fm_render_agreement_html(self, value, values=None):
         """Formatted wording with its placeholders filled in. A fact the
         order cannot supply prints as a pencil marker, never as a blank."""
