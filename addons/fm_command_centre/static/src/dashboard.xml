@@ -286,7 +286,7 @@
                     </div>
                     <h3 class="o_cc_h3">💳 How cash-sale clients paid</h3>
                     <div class="o_cc_hbars" t-if="d.cash.payment_total">
-                        <div class="o_cc_hbar" t-foreach="d.cash.payment_modes" t-as="pm" t-key="pm.key">
+                        <div class="o_cc_hbar" t-foreach="d.cash.payment_modes" t-as="pm" t-key="pm.key" t-on-click="() => this.open(pm.drill)">
                             <span class="o_cc_hbar_label"><t t-esc="pm.key === 'cash' ? '💵' : pm.key === 'card' ? '💳' : '🏦'"/> <t t-esc="pm.label"/></span>
                             <div class="o_cc_hbar_track">
                                 <div class="o_cc_hbar_fill o_cc_fill_orange" t-att-style="'width:' + width(pm.amount, maxOf(d.cash.payment_modes, 'amount')) + '%'"/>
@@ -433,9 +433,9 @@
                             <th class="text-center">Total</th>
                         </tr></thead>
                         <tbody>
-                            <tr t-foreach="d.services.rows" t-as="r" t-key="r.key">
+                            <tr t-foreach="d.services.rows" t-as="r" t-key="r.key" t-on-click="() => this.open(r.drill)">
                                 <td class="o_cc_strong"><t t-esc="icon(r.key)"/> <t t-esc="r.label"/></td>
-                                <td t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center">
+                                <td t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center" t-on-click.stop="() => this.open(r.branches[c.key] ? r.branches[c.key].drill : r.drill)">
                                     <t t-set="cell" t-value="r.branches[c.key]"/>
                                     <t t-if="cell">
                                         <b t-esc="k(cell.total)"/>
@@ -506,11 +506,11 @@
                     </t>
                     <div class="o_cc_legend"><span class="o_cc_lg_amc">🔁 AMC (contracts)</span><span class="o_cc_lg_cash">💵 Cash Sales (one-time jobs)</span></div>
                     <div class="o_cc_stack">
-                        <div class="o_cc_stack_row" t-foreach="d.sales.rows" t-as="r" t-key="r.id">
+                        <div class="o_cc_stack_row" t-foreach="d.sales.rows" t-as="r" t-key="r.id" t-on-click="() => this.open(r.drill)">
                             <span class="o_cc_stack_label" t-esc="r.name"/>
                             <div class="o_cc_stack_track">
-                                <div t-if="r.amc &gt; 0" class="o_cc_seg o_cc_seg_amc" t-att-style="'width:' + width(r.amc, d.sales.max_bar * 1.3) + '%'"><t t-if="r.amc" t-esc="r.amc"/></div>
-                                <div t-if="r.cash &gt; 0" class="o_cc_seg o_cc_seg_cash" t-att-style="'width:' + width(r.cash, d.sales.max_bar * 1.3) + '%'"><t t-if="r.cash" t-esc="r.cash"/></div>
+                                <div t-if="r.amc &gt; 0" class="o_cc_seg o_cc_seg_amc" title="Open these AMC contracts" t-on-click.stop="() => this.open(r.drill_amc)" t-att-style="'width:' + width(r.amc, d.sales.max_bar * 1.3) + '%'"><t t-if="r.amc" t-esc="r.amc"/></div>
+                                <div t-if="r.cash &gt; 0" class="o_cc_seg o_cc_seg_cash" title="Open these cash-sale invoices" t-on-click.stop="() => this.open(r.drill_cash)" t-att-style="'width:' + width(r.cash, d.sales.max_bar * 1.3) + '%'"><t t-if="r.cash" t-esc="r.cash"/></div>
                                 <div t-if="r.target" class="o_cc_target" t-att-style="'left:' + width(r.target, d.sales.max_bar * 1.3) + '%'"/>
                                 <span class="o_cc_stack_pct" t-att-style="'left:calc(' + width(Math.max(r.total, r.target, 0.0001), d.sales.max_bar * 1.3) + '% + 10px)'">
                                     <b t-esc="r.total"/><t t-if="r.target"> / <t t-esc="r.target"/> · <b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></t>
@@ -521,9 +521,9 @@
                     <table class="o_cc_table">
                         <thead><tr><th>Name</th><th>🔁 AMC Deals</th><th>💵 Cash Deals</th><th>Total</th><th>Target</th><th>Achv</th><th>AMC Mix</th></tr></thead>
                         <tbody>
-                            <tr t-foreach="d.sales.rows" t-as="r" t-key="r.id">
+                            <tr t-foreach="d.sales.rows" t-as="r" t-key="r.id" t-on-click="() => this.open(r.drill)">
                                 <td class="o_cc_strong" t-esc="r.name"/>
-                                <td t-esc="r.amc"/><td t-esc="r.cash"/>
+                                <td class="o_cc_link" t-on-click.stop="() => this.open(r.drill_amc)" t-esc="r.amc"/><td class="o_cc_link" t-on-click.stop="() => this.open(r.drill_cash)" t-esc="r.cash"/>
                                 <td class="o_cc_strong" t-esc="r.total"/>
                                 <td t-esc="r.target || '—'"/>
                                 <td><b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></td>

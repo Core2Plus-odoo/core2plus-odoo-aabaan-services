@@ -26,7 +26,7 @@ from datetime import date, timedelta
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.fields import Domain
 
 from .classification import SERVICES
@@ -589,6 +589,7 @@ class FmCommandCentre(models.AbstractModel):
                       ('state', 'in', ('in_process', 'paid', 'posted')),
                       ('date', '>=', _d(start)), ('date', '<', _d(end))]
         modes = {'cash': 0.0, 'card': 0.0, 'bank': 0.0}
+        mode_ids = {'cash': [], 'card': [], 'bank': []}
         same_day = set()
         paid_jobs = set()
         pay_ids = []
@@ -612,6 +613,7 @@ class FmCommandCentre(models.AbstractModel):
             else:
                 mode = 'bank'
             modes[mode] += pay.amount
+            mode_ids[mode].append(pay.id)
             for inv in cash_inv:
                 paid_jobs.add(inv.id)
                 if inv.invoice_date and inv.invoice_date == pay.date:
@@ -619,7 +621,10 @@ class FmCommandCentre(models.AbstractModel):
         mode_total = sum(modes.values())
         payment_modes = [
             {'key': key, 'label': label, 'amount': modes[key],
-             'share': self._pct(modes[key], mode_total, 0)}
+             'share': self._pct(modes[key], mode_total, 0),
+             'drill': {'model': 'account.payment',
+                       'domain': [('id', 'in', mode_ids[key])],
+                       'name': label} if mode_ids[key] else None}
             for key, label in (('cash', 'Cash'), ('card', 'Card'),
                                ('bank', 'Bank transfer'))]
 
@@ -914,7 +919,11 @@ class FmCommandCentre(models.AbstractModel):
                 'share': self._pct(total, grand),
                 'amc_share': self._pct(v['amc'], total, 0),
                 'branches': {str(b): {'total': x['amc'] + x['cash'],
-                                      'amc_share': self._pct(x['amc'], x['amc'] + x['cash'], 0)}
+                                      'amc_share': self._pct(x['amc'], x['amc'] + x['cash'], 0),
+                                      'drill': {'model': 'account.move.line',
+                                                'domain': domain + [('fm_cc_service', '=', key),
+                                                                    ('fm_cc_branch_id', '=', b)],
+                                                'name': SERVICE_LABELS.get(key, 'Other')}}
                              for b, x in v['branches'].items() if x['amc'] + x['cash']},
                 'drill': {'model': 'account.move.line',
                           'domain': domain + [('fm_cc_service', '=', key)],
@@ -966,17 +975,19 @@ class FmCommandCentre(models.AbstractModel):
     def _sales_team(self, ctx):
         start, end = ctx['start'], ctx['end']
         amc_deals = defaultdict(int)
+        amc_ids = defaultdict(list)
         users = {}
         for c in self._contracts():
             if c['start'] and start <= c['start'] < end and c['user']:
                 amc_deals[c['user'].id] += 1
+                amc_ids[c['user'].id].append(c['id'])
                 users[c['user'].id] = c['user']
         cash_deals = defaultdict(int)
         Move = self.env['account.move']
+        cash_dom = (self._inv_domain(ctx['states'], start, end, ('out_invoice',))
+                    + [('fm_cc_stream', '=', 'cash')])
         for user, count in Move._read_group(
-                self._inv_domain(ctx['states'], start, end, ('out_invoice',))
-                + [('fm_cc_stream', '=', 'cash')],
-                ['invoice_user_id'], ['__count']):
+                cash_dom, ['invoice_user_id'], ['__count']):
             if user:
                 cash_deals[user.id] += count
                 users[user.id] = user
@@ -989,10 +1000,19 @@ class FmCommandCentre(models.AbstractModel):
             a, c = amc_deals.get(uid, 0), cash_deals.get(uid, 0)
             total = a + c
             target = targets.get(uid, 0)
+            drill_amc = {'model': 'sale.order',
+                         'domain': [('id', 'in', amc_ids.get(uid, []))],
+                         'name': _('AMC deals · %s') % user.name}
+            drill_cash = {'model': 'account.move',
+                          'domain': cash_dom + [('invoice_user_id', '=', uid)],
+                          'name': _('Cash deals · %s') % user.name}
             rows.append({
                 'id': uid, 'name': user.name, 'amc': a, 'cash': c, 'total': total,
                 'target': target, 'achieved': self._pct(total, target, 0),
                 'amc_mix': self._pct(a, total, 0),
+                'drill_amc': drill_amc if a else None,
+                'drill_cash': drill_cash if c else None,
+                'drill': drill_cash if c >= a else drill_amc,
             })
         rows.sort(key=lambda r: (-r['total'], r['name']))
         above = [r['name'] for r in rows if r['target'] and total_ok(r)]

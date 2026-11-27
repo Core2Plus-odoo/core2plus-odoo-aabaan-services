@@ -632,3 +632,7 @@ $cc-soft: #f4f5f9;
         .o_cc_page:last-child { page-break-after: auto; break-after: auto; }
     }
 }
+
+// Sales Team: each bar segment and deal count opens its own records
+.o_cc_seg { cursor: pointer; }
+.o_cc_seg:hover, .o_cc_link:hover { filter: brightness(0.92); text-decoration: underline; }

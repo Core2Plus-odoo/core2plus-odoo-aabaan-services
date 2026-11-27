@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'FM Command Centre',
-    'version': '19.0.3.3.0',
+    'version': '19.0.3.4.0',
     'category': 'Reporting',
     'summary': 'CEO Dashboard — AMC contracts and cash sales side by side, '
                'per branch, live from Odoo',
