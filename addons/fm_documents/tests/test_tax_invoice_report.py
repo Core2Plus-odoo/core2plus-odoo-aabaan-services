@@ -152,10 +152,14 @@ class TestFmTaxInvoiceReport(AccountTestInvoicingCommon):
         ]})
         rows = move._fm_numbered_lines()
         numbered = [r["no"] for r in rows if r["no"] is not None]
-        self.assertEqual(numbered, list(range(1, len(numbered) + 1)))
+        products = [r for r in rows if r["line"].display_type == "product"]
+        self.assertTrue(products)
+        self.assertEqual(numbered, list(range(1, len(products) + 1)))
         for row in rows:
-            if row["line"].display_type:
+            if row["line"].display_type in ("line_section", "line_note"):
                 self.assertIsNone(row["no"], row["line"].name)
+            else:
+                self.assertTrue(row["no"], row["line"].name)
 
     def test_the_total_is_spelled_out(self):
         move = self._invoice()
