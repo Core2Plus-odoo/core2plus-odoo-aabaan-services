@@ -43,6 +43,7 @@
                             <field name="active"/>
                         </group>
                         <group>
+                            <field name="invoice_name" placeholder="Blank prints the company name"/>
                             <field name="phone"/>
                             <field name="email"/>
                             <field name="street"/>

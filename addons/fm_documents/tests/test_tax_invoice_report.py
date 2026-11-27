@@ -72,6 +72,16 @@ class TestFmTaxInvoiceReport(AccountTestInvoicingCommon):
         self.assertIn("CN-1234567", html, "trade licence missing")
         self.assertIn("Federal Decree-Law No. 8 of 2017", html)
 
+    def test_dates_read_day_month_year(self):
+        move = self._invoice(post=False, invoice_date="2026-11-27")
+        self.assertIn("27-Nov-2026", self._render(move))
+
+    def test_the_company_document_layout_is_not_used(self):
+        # Invoices carry their own letterhead; the company layout is the
+        # contract one (client request, 27 Nov 2026).
+        html = self._render(self._invoice())
+        self.assertNotIn("o_company_%s_layout" % self.env.company.id, html)
+
     def test_a_credit_note_is_titled_as_one(self):
         """Not "Tax Invoice". A credit note headed as an invoice is a
         document the customer can file against the wrong return."""

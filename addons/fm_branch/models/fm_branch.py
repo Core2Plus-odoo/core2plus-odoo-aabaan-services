@@ -28,6 +28,11 @@ class FmBranch(models.Model):
     manager_id = fields.Many2one("res.users", string="Branch Manager")
     phone = fields.Char()
     email = fields.Char()
+    invoice_name = fields.Char(
+        string="Name on Invoices",
+        help="The legal name this branch trades under, printed as the issuer "
+             "on its Tax Invoices (e.g. 'Aaban Classic Building Cleaning SHJ "
+             "BR-2'). Blank prints the company name.")
     street = fields.Char()
     city = fields.Char()
     active = fields.Boolean(default=True)

@@ -86,7 +86,7 @@ class FmSupervisorDashboard(models.AbstractModel):
         return Domain.OR(clauses)
 
     @api.model
-    def get_board_data(self, month_start=None, technician_id=None, service_line=None, branch_id=None):
+    def get_board_data(self, month_start=None, technician_id=None, service_line=None, branch_id=None, search=None):
         self._check_dashboard_access()
         Task = self.env["project.task"].sudo()
         companies = self.env.companies
@@ -112,6 +112,18 @@ class FmSupervisorDashboard(models.AbstractModel):
             dom += self._service_line_domain(Task, service_line)
         if branch_id and "branch_id" in Task._fields:
             dom.append(("branch_id", "=", branch_id))
+        search = (search or "").strip()
+        if search:
+            # Job name, customer, contract number or assigned technician.
+            clauses = [[("name", "ilike", search)],
+                       [("partner_id", "ilike", search)],
+                       [("user_ids.name", "ilike", search)]]
+            for link in ("sale_order_id", "fm_contract_order_id"):
+                if link in Task._fields:
+                    clauses.append([(link + ".name", "ilike", search)])
+            if "fm_contract_subject" in Task._fields:
+                clauses.append([("fm_contract_subject", "ilike", search)])
+            dom += Domain.OR(clauses)
         tasks = Task.search(dom)
 
         def closed(t):
@@ -161,6 +173,9 @@ class FmSupervisorDashboard(models.AbstractModel):
                 "status": st,
                 "status_label": dict((k, l) for k, l, _c in STATUSES).get(st, st),
                 "color": STATUS_COLOR.get(st, "#2f6fed"),
+                # The cell shows the job name alone; customer, contract
+                # subject and technician stay in the hover text.
+                "name": t.name or title_of(t),
                 "title": title_of(t),
                 "sub": t.fm_asset_id.display_name if t.fm_asset_id else (
                     ", ".join(t.user_ids.mapped("name")) or ""),
@@ -285,16 +300,17 @@ class FmSupervisorDashboard(models.AbstractModel):
                 "technician_id": technician_id or False,
                 "service_line": service_line or False,
                 "branch_id": branch_id or False,
+                "search": search,
             },
             "company_label": "All Companies" if len(companies) > 1 else self.env.company.name,
         }
 
     @api.model
-    def export_board_xlsx(self, month_start=None, technician_id=None, service_line=None, branch_id=None):
+    def export_board_xlsx(self, month_start=None, technician_id=None, service_line=None, branch_id=None, search=None):
         """Every visit of the month the calendar shows, under the same
         filters, as an Excel file — the printout folds busy days into
         "+N more", this does not. Returns {filename, content (base64)}."""
-        data = self.get_board_data(month_start, technician_id, service_line, branch_id)
+        data = self.get_board_data(month_start, technician_id, service_line, branch_id, search)
         events = {e["id"]: dict(e, day=fields.Date.to_date(c["date"]))
                   for week in data["weeks"] for c in week if c["in_month"] for e in c["events"]}
         tasks = self.env["project.task"].sudo().browse(list(events)).sorted(lambda t: (t.date_deadline, t.id))

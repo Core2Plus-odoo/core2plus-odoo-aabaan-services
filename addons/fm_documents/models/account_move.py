@@ -69,6 +69,46 @@ class AccountMove(models.Model):
                 "Invoices entry instead.",
                 label.get(self.move_type, self.move_type)))
 
+    def _fm_invoice_branch(self):
+        """The branch this invoice is issued from, or an empty record.
+
+        fm_branch owns ``branch_id`` and depends on this module, so the
+        branch is resolved at runtime; the command centre's derived branch
+        is the fallback when the invoice itself carries none."""
+        self.ensure_one()
+        for fname in ("branch_id", "fm_cc_branch_id"):
+            if fname in self._fields and self[fname]:
+                return self[fname]
+        return False
+
+    def _fm_invoice_issuer(self):
+        """Name and address printed as the issuer of the Tax Invoice:
+        the branch's own trading name and address when the invoice has a
+        branch that carries them, the company's otherwise."""
+        self.ensure_one()
+        company = self.company_id.sudo()
+        branch = self._fm_invoice_branch()
+        name = (branch and "invoice_name" in branch._fields and branch.invoice_name) or company.name
+        if branch and branch.street:
+            lines = [part for part in (branch.street, branch.city) if part]
+            lines.append(company.country_id.name or "United Arab Emirates")
+        else:
+            partner = company.partner_id
+            lines = [part for part in (partner.street, partner.street2,
+                                       " ".join(p for p in (partner.city, partner.state_id.name) if p),
+                                       partner.country_id.name) if part]
+        return {
+            "name": name,
+            "lines": lines,
+            "phone": (branch and branch.phone) or company.phone or "",
+            "email": (branch and branch.email) or company.email or "",
+        }
+
+    @staticmethod
+    def _fm_date(value):
+        """Dates on the Tax Invoice read 27-Nov-2026, as the client asked."""
+        return value.strftime("%d-%b-%Y") if value else ""
+
     def _fm_document_title(self):
         self.ensure_one()
         return _("Tax Credit Note") if self.move_type == "out_refund" else _("Tax Invoice")

@@ -42,13 +42,35 @@
         <t t-set="tax_lines" t-value="o._fm_tax_breakdown()"/>
         <t t-set="contract" t-value="o._fm_source_contract()"/>
         <t t-set="cols" t-value="7 if has_discount else 6"/>
+        <t t-set="issuer" t-value="o._fm_invoice_issuer()"/>
 
-        <t t-call="web.external_layout">
+        <!-- Its own letterhead, not the company document layout: that
+             layout is the contract and quotation letterhead, and the client
+             asked for invoices to carry their own (27 Nov 2026). The issuer
+             is the invoice's branch, by its trading name and address. -->
+        <t t-call="web.basic_layout">
             <div class="page" style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:12px; line-height:1.5; color:#2b2b2b;">
                 <style>
                     .header img, .o_company_logo { max-height: 90px !important; max-width: 260px !important; width: auto !important; height: auto !important; }
                     table.fm-plain, table.fm-plain td { border: none !important; }
                 </style>
+
+                <table class="fm-plain" style="width:100%; border-collapse:collapse; margin-bottom:6px;">
+                    <tr>
+                        <td style="width:45%; vertical-align:middle;">
+                            <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height:70px; max-width:220px;" alt="Logo"/>
+                        </td>
+                        <td style="text-align:right; vertical-align:top; font-size:11.5px; color:#444;">
+                            <div style="font-weight:700; font-size:13px; color:#1C2B3A;" t-esc="issuer['name']"/>
+                            <div t-foreach="issuer['lines']" t-as="ln" t-esc="ln"/>
+                            <div t-if="company.vat">TRN: <span t-field="company.vat"/></div>
+                            <div t-if="issuer['phone'] or issuer['email']">
+                                <t t-esc="issuer['phone']"/><t t-if="issuer['phone'] and issuer['email']"> · </t><t t-esc="issuer['email']"/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <div style="border-top:3px solid #EE7A22; margin-bottom:14px;"/>
 
                 <div class="row mb-4">
                     <div class="col-7">
@@ -65,15 +87,15 @@
                             </tr>
                             <tr>
                                 <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Invoice Date</td>
-                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.invoice_date"/></td>
+                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;" t-esc="o._fm_date(o.invoice_date)"/>
                             </tr>
                             <tr t-if="'delivery_date' in o._fields and o.delivery_date and o.delivery_date != o.invoice_date">
                                 <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Date of Supply</td>
-                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.delivery_date"/></td>
+                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;" t-esc="o._fm_date(o.delivery_date)"/>
                             </tr>
                             <tr t-if="o.invoice_date_due">
                                 <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">Payment Due</td>
-                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;"><span t-field="o.invoice_date_due"/></td>
+                                <td style="padding:3px 8px; border:1px solid #ddd; text-align:right;" t-esc="o._fm_date(o.invoice_date_due)"/>
                             </tr>
                             <tr t-if="o.invoice_origin or o.ref">
                                 <td style="padding:3px 8px; border:1px solid #ddd; background:#f7f7f7; font-weight:bold;">LPO / Ref</td>
@@ -99,9 +121,8 @@
                 <div class="row mb-3">
                     <div class="col-6">
                         <div style="font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px;">From</div>
-                        <div style="font-weight:700; text-transform:uppercase;" t-field="company.name"/>
-                        <div style="font-size:11px; color:#666;" t-field="company.partner_id"
-                             t-options='{"widget": "contact", "fields": ["address"], "no_marker": true}'/>
+                        <div style="font-weight:700; text-transform:uppercase;" t-esc="issuer['name']"/>
+                        <div style="font-size:11px; color:#666;" t-foreach="issuer['lines']" t-as="ln" t-esc="ln"/>
                         <div t-if="company.vat" style="font-size:11px; color:#666;">TRN: <span t-field="company.vat"/></div>
                         <div t-if="company.company_registry" style="font-size:11px; color:#666;">Trade Licence: <span t-field="company.company_registry"/></div>
                     </div>

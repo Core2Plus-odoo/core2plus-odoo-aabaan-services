@@ -18,6 +18,7 @@ export class FmSupervisorDashboard extends Component {
             technicianId: false,
             serviceLine: false,
             branchId: false,
+            search: "",
             expanded: {},
         });
         onWillStart(() => this.load());
@@ -30,6 +31,7 @@ export class FmSupervisorDashboard extends Component {
             this.state.technicianId || null,
             this.state.serviceLine || null,
             this.state.branchId || null,
+            this.state.search || null,
         ]);
         this.state.loading = false;
     }
@@ -100,6 +102,7 @@ export class FmSupervisorDashboard extends Component {
             this.state.technicianId || null,
             this.state.serviceLine || null,
             this.state.branchId || null,
+            this.state.search || null,
         ]);
         const bytes = Uint8Array.from(atob(res.content), (ch) => ch.charCodeAt(0));
         const url = URL.createObjectURL(new Blob([bytes], {
@@ -114,8 +117,25 @@ export class FmSupervisorDashboard extends Component {
         URL.revokeObjectURL(url);
     }
 
+    /** Every visit of the day is in the page; "+ more" only folds it on
+     *  screen, so the printout and the PDF always carry the whole day. */
     print() {
         window.print();
+    }
+
+    /** Search runs on Enter or when the box is cleared. */
+    onSearch(ev) {
+        if (ev.type === "keydown" && ev.key !== "Enter") return;
+        const v = (ev.target.value || "").trim();
+        if (v === this.state.search) return;
+        this.state.search = v;
+        this.state.expanded = {};
+        this.load();
+    }
+
+    clearSearch() {
+        this.state.search = "";
+        this.load();
     }
 
     onFilter(field, ev) {

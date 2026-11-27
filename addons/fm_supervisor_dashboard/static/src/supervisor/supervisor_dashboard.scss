@@ -76,6 +76,13 @@
     .o_fm_cal_txt { min-width: 0; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .o_fm_cal_more { font-size: 11px; font-weight: 650; color: var(--c-head); cursor: pointer; padding: 1px 3px; }
     .o_fm_cal_more:hover { text-decoration: underline; }
+    /* Folded under "+ more" on screen; always printed (see @media print). */
+    .o_fm_cal_evt.o_fm_fold { display: none; }
+    .o_fm_cal_search { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px;
+        border: 1px solid var(--c-border); border-radius: 9px; background: var(--c-card); color: var(--c-muted); }
+    .o_fm_cal_search input { border: 0; outline: 0; background: transparent; color: var(--c-text); width: 230px; font-size: 12.5px; }
+    .o_fm_cal_found { margin: 10px 0 0; font-size: 12.5px; color: var(--c-muted); }
+    .o_fm_cal_found a { margin-left: 8px; }
     .o_fm_cal_mo { max-width: 130px; } .o_fm_cal_yr { max-width: 90px; }
 
     /* Side legend */
@@ -106,6 +113,8 @@
     .o_fm_cal_wrap { grid-template-columns: 1fr; }
     .o_fm_cal_grid, .o_fm_cal_side, .o_fm_cal_cell, .o_fm_cal_kpi { box-shadow: none !important; }
     .o_fm_cal_cell { min-height: 96px; break-inside: avoid; }
+    .o_fm_cal_evt.o_fm_fold { display: flex !important; }
+    .o_fm_cal_txt { white-space: normal; overflow: visible; }
     .o_fm_cal_title { color: #000; }
 }
 
