@@ -26,7 +26,7 @@ from datetime import date, timedelta
 
 from dateutil.relativedelta import relativedelta
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.fields import Domain
 
 from .classification import SERVICES
@@ -984,8 +984,8 @@ class FmCommandCentre(models.AbstractModel):
                 users[c['user'].id] = c['user']
         cash_deals = defaultdict(int)
         Move = self.env['account.move']
-        cash_dom = (self._inv_domain(ctx['states'], start, end, ('out_invoice',))
-                    + [('fm_cc_stream', '=', 'cash')])
+        cash_dom = self._inv_domain(ctx['states'], start, end, ('out_invoice',)) \
+            + [('fm_cc_stream', '=', 'cash')]
         for user, count in Move._read_group(
                 cash_dom, ['invoice_user_id'], ['__count']):
             if user:
@@ -1002,17 +1002,16 @@ class FmCommandCentre(models.AbstractModel):
             target = targets.get(uid, 0)
             drill_amc = {'model': 'sale.order',
                          'domain': [('id', 'in', amc_ids.get(uid, []))],
-                         'name': _('AMC deals · %s') % user.name}
+                         'name': 'AMC deals — %s' % user.name}
             drill_cash = {'model': 'account.move',
                           'domain': cash_dom + [('invoice_user_id', '=', uid)],
-                          'name': _('Cash deals · %s') % user.name}
+                          'name': 'Cash deals — %s' % user.name}
             rows.append({
                 'id': uid, 'name': user.name, 'amc': a, 'cash': c, 'total': total,
                 'target': target, 'achieved': self._pct(total, target, 0),
                 'amc_mix': self._pct(a, total, 0),
-                'drill_amc': drill_amc if a else None,
-                'drill_cash': drill_cash if c else None,
-                'drill': drill_cash if c >= a else drill_amc,
+                'drill_amc': drill_amc, 'drill_cash': drill_cash,
+                'drill': drill_amc if a >= c and a else drill_cash,
             })
         rows.sort(key=lambda r: (-r['total'], r['name']))
         above = [r['name'] for r in rows if r['target'] and total_ok(r)]
