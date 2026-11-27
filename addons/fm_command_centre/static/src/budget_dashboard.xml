@@ -16,7 +16,7 @@
     <t t-name="fm_command_centre.BudgetFooter">
         <div class="o_cc_footer">
             <span t-esc="d.tagline"/>
-            <span>Budget Dashboard · <t t-esc="page"/> / 6</span>
+            <span>Budget Dashboard · <t t-esc="page"/> / 9</span>
         </div>
     </t>
 
@@ -194,8 +194,22 @@
                             <tr class="o_cc_total"><td>Total</td><td t-esc="k(d.cover.total)"/><td t-esc="k(d.cover.avg)"/><td>100%</td></tr>
                         </tbody>
                     </table>
+                    <h3 class="o_cc_h3">🗂️ Every category</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Category</th><th>Payment plan</th><th><t t-esc="d.month_count"/>-month total</th><th>Per month</th><th>Share</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="d.categories" t-as="r" t-key="r.id" t-on-click="() => this.open(r.drill)">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td class="text-muted" t-esc="r.plan"/>
+                                <td class="o_cc_strong" t-esc="r.total ? k(r.total) : '—'"/>
+                                <td t-esc="r.total ? k(r.per_month) : '—'"/>
+                                <td t-att-class="r.total ? '' : 'o_cc_warn'" t-esc="r.total ? pct(r.share, 1) : 'no budget'"/>
+                            </tr>
+                            <tr class="o_cc_total"><td>Total</td><td/><td t-esc="k(d.cover.total)"/><td t-esc="k(d.cover.avg)"/><td>100%</td></tr>
+                        </tbody>
+                    </table>
                     <div class="o_cc_note o_cc_note_orange" t-if="d.group_rows.length > 2">
-                        📌 <b><t t-esc="d.group_rows[0].label"/> is <t t-esc="pct(d.group_rows[0].share)"/> of the budget.</b> <t t-esc="d.group_rows[1].label"/> (AED <t t-esc="k(d.group_rows[1].total)"/>) and <t t-esc="d.group_rows[2].label.toLowerCase()"/> (AED <t t-esc="k(d.group_rows[2].total)"/>) come next.
+                        📌 <b><t t-esc="d.group_rows[0].label"/> is <t t-esc="pct(d.group_rows[0].share)"/> of the budget.</b> <t t-esc="d.group_rows[1].label"/> (AED <t t-esc="k(d.group_rows[1].total)"/>) and <t t-esc="d.group_rows[2].label.toLowerCase()"/> (AED <t t-esc="k(d.group_rows[2].total)"/>) come next.<t t-if="d.nobudget.length"> <t t-esc="d.nobudget.join(' and ')"/> have no budget yet.</t>
                     </div>
                     <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="3"/></t>
                 </section>
@@ -259,10 +273,10 @@
                         <t t-set="sub" t-value="'Monthly payroll by branch and visas that need renewing.'"/>
                     </t>
                     <div class="o_cc_kpis">
-                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.team.emp_drill)"><b t-esc="d.team.staff"/><span>employees in Odoo</span><small t-if="d.team.unassigned">(<t t-esc="d.team.unassigned"/> without a branch)</small></div>
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(d.team.emp_drill)"><b t-esc="d.team.staff"/><span>employees in Odoo</span><small t-if="d.team.unassigned"><t t-esc="d.team.unassigned"/> without a single branch</small></div>
                         <div class="o_cc_kpi o_cc_bg_blue"><b t-esc="aed(d.team.per_month)"/><span>payroll a month (plan)</span><small>AED <t t-esc="k(d.cover.payroll)"/> over <t t-esc="d.month_count"/> months</small></div>
                         <div class="o_cc_kpi o_cc_bg_red"><b t-esc="d.team.expired"/><span>visas already expired</span><small>renew now</small></div>
-                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="d.team.due"/><span>visas due in the plan period</span></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="d.team.due"/><span>visas due in the plan period</span><small t-if="d.team.visa_cost">AED <t t-esc="k(d.team.visa_cost)"/> incl. expired</small></div>
                     </div>
                     <h3 class="o_cc_h3">👥 Payroll plan by branch</h3>
                     <div class="o_cc_hbars">
@@ -288,12 +302,13 @@
                     </table>
                     <h3 class="o_cc_h3">🛂 Visa renewals: expired or due before the plan ends</h3>
                     <table class="o_cc_table" t-if="d.team.visas.length">
-                        <thead><tr><th>Name</th><th>Works in</th><th>Visa expiry</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Works in</th><th>Visa expiry</th><th>Renewal (AED)</th><th>Status</th></tr></thead>
                         <tbody>
                             <tr t-foreach="d.team.visas" t-as="v" t-key="v.id" t-on-click="() => this.open({model: 'hr.employee', domain: [['id', '=', v.id]], name: v.name})">
                                 <td class="o_cc_strong" t-esc="v.name"/>
                                 <td t-esc="v.branch or '—'"/>
                                 <td t-esc="v.expiry"/>
+                                <td t-esc="v.cost ? num(v.cost) : '—'"/>
                                 <td>
                                     <b t-if="v.status === 'expired'" class="o_cc_bad">! Expired</b>
                                     <b t-elif="v.status === 'soon'" class="o_cc_warn">• Due in <t t-esc="v.days"/> d</b>
@@ -302,15 +317,167 @@
                             </tr>
                         </tbody>
                     </table>
-                    <p class="o_cc_empty" t-else="">No visa expiry dates fall in the plan period. Visa expiry is read from each employee (Employees → Private Information → Visa Expiration Date).</p>
-                    <p class="o_cc_tablenote">Staff are counted from Employees by their FM branch; payroll is the budget plan.</p>
+                    <p class="o_cc_empty" t-elif="!d.team.can_hr">Visa dates need Employees access.</p>
+                    <p class="o_cc_empty" t-else="">No visa expiry dates fall in the plan period. Visa expiry is read from each employee (Employees → Private Information → Visa &amp; Work Permit).</p>
+                    <div class="o_cc_note o_cc_note_orange" t-if="d.team.expired">
+                        ⚠️ <b><t t-esc="d.team.expired"/> visa<t t-if="d.team.expired !== 1">s have</t><t t-else=""> has</t> already expired</b> (<t t-esc="d.team.expired_names.join(', ')"/>).
+                    </div>
+                    <p class="o_cc_tablenote">Staff are counted from Employees by FM branch, or by a work location naming one branch; payroll is the budget plan.</p>
                     <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="5"/></t>
                 </section>
 
-                <!-- ============ 5 · BUDGET VS ACTUAL ============ -->
+                <!-- ============ 5 · RENEWALS & COMPLIANCE ============ -->
+                <section class="o_cc_page" t-if="showSection('renewals')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="5"/><t t-set="title" t-value="'Renewals &amp; Compliance'"/>
+                        <t t-set="sub" t-value="'Vehicles and health / DM cards, checked against today (' + d.today + ').'"/>
+                    </t>
+                    <t t-set="rn" t-value="d.renewals"/>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy" t-on-click="() => this.open(rn.veh_drill)"><b t-esc="rn.fleet ? rn.vehicles.length : '—'"/><span>vehicles listed</span><small t-if="!rn.fleet">Fleet not installed</small></div>
+                        <div class="o_cc_kpi o_cc_bg_red"><b t-esc="rn.veh_expired.length"/><span>registrations expired</span><small>off the road until renewed</small></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="rn.veh_soon.length"/><span>due in next 45 days</span><small>renew this month</small></div>
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="rn.cards_expired"/><span>health / DM cards expired</span><small>AED <t t-esc="k(rn.cards_budget)"/> budgeted</small></div>
+                    </div>
+                    <h3 class="o_cc_h3">🚐 Vehicle registrations</h3>
+                    <table class="o_cc_table" t-if="rn.vehicles.length">
+                        <thead><tr><th>Vehicle</th><th>Branch</th><th>Registration expiry</th><th>Insurance expiry</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="rn.vehicles" t-as="v" t-key="v.id" t-on-click="() => this.open({model: 'fleet.vehicle', domain: [['id', '=', v.id]], name: v.name})">
+                                <td class="o_cc_strong" t-esc="v.name"/>
+                                <td t-esc="v.branch or '—'"/>
+                                <td t-esc="v.reg or 'not recorded'"/>
+                                <td t-esc="v.ins or 'not recorded'"/>
+                                <td><b t-att-class="statusClass(v)" t-esc="statusText(v)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-elif="rn.fleet">No vehicles in Fleet yet.</p>
+                    <p class="o_cc_empty" t-else="">Vehicles are kept in the Fleet app: install <b>FM Fleet</b> to track registration and insurance expiry here.</p>
+                    <h3 class="o_cc_h3">🪪 Health &amp; DM cards</h3>
+                    <table class="o_cc_table" t-if="rn.cards.length">
+                        <thead><tr><th>Name</th><th>Health card expiry</th><th>DM card expiry</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="rn.cards" t-as="c" t-key="c.id" t-on-click="() => this.open({model: 'hr.employee', domain: [['id', '=', c.id]], name: c.name})">
+                                <td class="o_cc_strong" t-esc="c.name"/>
+                                <td t-esc="c.health or 'not recorded'"/>
+                                <td t-esc="c.dm or 'not recorded'"/>
+                                <td><b t-att-class="statusClass(c)" t-esc="statusText(c)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_empty" t-elif="!rn.can_hr">Card dates need Employees access.</p>
+                    <p class="o_cc_empty" t-else="">No health or DM card dates are recorded. Enter them on each employee (Private Information → Visa &amp; Work Permit).</p>
+                    <div class="o_cc_note o_cc_note_orange" t-if="rn.cards_expired or rn.veh_expired.length or rn.veh_soon.length">
+                        ⚠️ <t t-if="rn.cards_expired"><b><t t-esc="rn.cards_expired"/> health / DM card<t t-if="rn.cards_expired !== 1">s are</t><t t-else=""> is</t> past expiry</b><t t-if="!rn.cards_budget"> and the budget has nothing for them</t>. </t>
+                        <t t-if="rn.veh_expired.length">Vehicles <t t-esc="rn.veh_expired.join(' and ')"/> are past expiry. </t>
+                        <t t-if="rn.veh_soon.length"><t t-esc="rn.veh_soon.join(', ')"/> expire within 45 days.</t>
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="6"/></t>
+                </section>
+
+                <!-- ============ 6 · RUNNING COSTS ============ -->
+                <section class="o_cc_page" t-if="showSection('running')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="6"/><t t-set="title" t-value="'Running Costs'"/>
+                        <t t-set="sub" t-value="'What keeps each branch open every month, and when the yearly fees land.'"/>
+                    </t>
+                    <t t-set="ru" t-value="d.running"/>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="aed(ru.total)"/><span>running costs a month</span><small>fuel, chemicals, phones, utilities…</small></div>
+                        <div class="o_cc_kpi o_cc_bg_teal"><b t-esc="aed(ru.chem)"/><span>chemicals a month</span><small t-if="ru.chem_branch">AED <t t-esc="num(ru.chem_branch)"/> per branch</small></div>
+                        <div class="o_cc_kpi o_cc_bg_blue"><b t-esc="aed(ru.fuel)"/><span>fuel a month</span><small t-if="ru.fuel_branch">AED <t t-esc="num(ru.fuel_branch)"/> per branch</small></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="aed(ru.rent_total)"/><span>rent, <t t-esc="d.month_count"/> months</span></div>
+                    </div>
+                    <h3 class="o_cc_h3">🔁 Monthly running costs by branch (AED)</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Item</th><th t-foreach="d.locations" t-as="l" t-key="l.key" t-esc="l.label"/><th>Total</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="ru.rows" t-as="r" t-key="r.id">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-foreach="r.cells" t-as="c" t-key="c_index" t-esc="c ? num(c) : '—'"/>
+                                <td class="o_cc_strong" t-esc="num(r.total)"/>
+                            </tr>
+                            <tr class="o_cc_total"><td>Total a month</td><td t-foreach="ru.col" t-as="c" t-key="c_index" t-esc="num(c)"/><td t-esc="num(ru.total)"/></tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_tablenote">Average of the plan over the period; rounding of the sheet's printed month totals sits in petty cash.</p>
+                    <h3 class="o_cc_h3">🏠 Office rent payments</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Branch</th><th>Months paid</th><th>Each payment</th><th>Payments</th><th><t t-esc="d.month_count"/>-month total</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="ru.rent" t-as="r" t-key="r.key">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-esc="r.months"/>
+                                <td t-esc="num(r.each)"/>
+                                <td t-esc="r.count"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                            </tr>
+                            <tr class="o_cc_total"><td>Total</td><td/><td/><td/><td t-esc="k(ru.rent_total)"/></tr>
+                        </tbody>
+                    </table>
+                    <h3 class="o_cc_h3">🗓️ Yearly fees calendar (AED '000)</h3>
+                    <table class="o_cc_table o_cc_table_tight">
+                        <thead><tr><th>Fee</th><th t-foreach="ru.months" t-as="m" t-key="m_index" t-esc="m"/><th>Total</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="ru.calendar" t-as="r" t-key="r_index">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-foreach="r.cells" t-as="c" t-key="c_index" t-esc="c ? (c / 1000).toFixed(1) : ''"/>
+                                <td class="o_cc_strong" t-esc="k(r.total)"/>
+                            </tr>
+                            <tr class="o_cc_total"><td>Total</td><td t-foreach="ru.cal_cols" t-as="c" t-key="c_index" t-esc="c ? (c / 1000).toFixed(1) : ''"/><td/></tr>
+                        </tbody>
+                    </table>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="7"/></t>
+                </section>
+
+                <!-- ============ 7 · BUDGET CHECKS ============ -->
+                <section class="o_cc_page" t-if="showSection('checks')">
+                    <t t-call="fm_command_centre.BudgetHead">
+                        <t t-set="n" t-value="7"/><t t-set="title" t-value="'Budget Checks'"/>
+                        <t t-set="sub" t-value="'Where the monthly plan differs from the detail tabs of the budget sheet.'"/>
+                    </t>
+                    <t t-set="ck" t-value="d.checks"/>
+                    <div class="o_cc_kpis">
+                        <div class="o_cc_kpi o_cc_bg_navy"><b t-esc="ck.review"/><span>items to review</span></div>
+                        <div class="o_cc_kpi o_cc_bg_orange"><b t-esc="ck.higher"/><span>plan higher than detail</span><small t-esc="ck.higher_names.join(', ').toLowerCase()"/></div>
+                        <div class="o_cc_kpi o_cc_bg_blue"><b t-esc="ck.lower"/><span>plan lower than detail</span><small>mostly yearly fees</small></div>
+                        <div class="o_cc_kpi o_cc_bg_green"><b t-esc="ck.months"/><span>months covered</span><small t-if="ck.missing_month"><t t-esc="ck.missing_month"/> not in the plan</small></div>
+                    </div>
+                    <h3 class="o_cc_h3">🔍 Plan vs detail tabs</h3>
+                    <table class="o_cc_table">
+                        <thead><tr><th>Category</th><th>Detail tab says</th><th>Monthly plan has</th><th>Difference (AED)</th><th>Check</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="ck.rows" t-as="r" t-key="r_index">
+                                <td class="o_cc_strong" t-esc="r.label"/>
+                                <td t-esc="r.detail"/>
+                                <td t-esc="r.plan"/>
+                                <td t-esc="r.diff_label"/>
+                                <td>
+                                    <b t-if="r.status === 'higher'" class="o_cc_warn">▲ Plan higher</b>
+                                    <b t-elif="r.status === 'lower'" class="o_cc_bad">▼ Plan lower</b>
+                                    <b t-elif="r.status === 'missing'" class="o_cc_bad">! Missing</b>
+                                    <b t-else="" class="o_cc_good">✓ Matches</b>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="o_cc_tablenote">Detail-tab amounts are kept on each category (Configuration → Budget Categories). Checks are company-wide.</p>
+                    <div class="o_cc_two">
+                        <div class="o_cc_note o_cc_note_orange" t-if="ck.missing_month">
+                            🗓️ The plan runs <t t-esc="ck.first"/> to <t t-esc="ck.last"/>, <t t-esc="ck.months"/> months. Adding <t t-esc="ck.missing_month"/> at the average month would bring a full year to about AED <t t-esc="k(ck.full_year)"/>.
+                        </div>
+                        <div class="o_cc_note o_cc_note_orange" t-if="ck.yearly_gap or ck.monthly_gap">
+                            ⚠️ <t t-if="ck.yearly_gap">Yearly fees are under-planned by about <b>AED <t t-esc="k(ck.yearly_gap)"/></b> against the detail tabs. </t>
+                            <t t-if="ck.monthly_gap">Monthly items run the other way: about <b>AED <t t-esc="k(ck.monthly_gap)"/> a month</b> above the detail tabs.</t>
+                        </div>
+                    </div>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="8"/></t>
+                </section>
+                <!-- ============ 8 · BUDGET VS ACTUAL ============ -->
                 <section class="o_cc_page" t-if="showSection('actual')">
                     <t t-call="fm_command_centre.BudgetHead">
-                        <t t-set="n" t-value="5"/><t t-set="title" t-value="'Budget vs Actual'"/>
+                        <t t-set="n" t-value="8"/><t t-set="title" t-value="'Budget vs Actual'"/>
                         <t t-set="sub" t-value="'The plan against the expenses booked in Odoo, month by month to date.'"/>
                     </t>
                     <t t-set="a" t-value="d.actual"/>
@@ -352,7 +519,7 @@
                     <div class="o_cc_note o_cc_note_orange" t-if="a.used !== null and a.used &lt; 20">
                         ⚠️ <b>Only <t t-esc="pct(a.used)"/> of the budget shows as spent</b> because most costs (payroll, rent, fuel) are not yet entered in Odoo. The comparison becomes meaningful once they are.
                     </div>
-                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="6"/></t>
+                    <t t-call="fm_command_centre.BudgetFooter"><t t-set="page" t-value="9"/></t>
                 </section>
             </div>
         </div>

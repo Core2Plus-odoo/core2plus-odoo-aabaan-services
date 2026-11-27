@@ -685,3 +685,6 @@ $cc-grps: ($cc-navy, $cc-blue, $cc-orange, $cc-teal, $cc-green, $cc-amber-bg, #8
         tr.o_cc_future td { color: $cc-muted; }
     }
 }
+.o_cc_root.o_cc_budget .o_cc_table_tight {
+    td, th { padding-left: 6px; padding-right: 6px; }
+}

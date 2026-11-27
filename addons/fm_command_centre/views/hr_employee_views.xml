@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Health and DM card expiry under Visa & Work Permit. The standard form
+         hides the visa expiry until a visa number is typed; the Budget
+         Dashboard tracks the date, so it is shown always. -->
+    <record id="view_employee_form_fm_cards" model="ir.ui.view">
+        <field name="name">hr.employee.form.fm.cards</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='visa_expire']" position="attributes">
+                <attribute name="invisible">False</attribute>
+            </xpath>
+            <xpath expr="//label[@for='visa_expire']" position="attributes">
+                <attribute name="invisible">False</attribute>
+            </xpath>
+            <xpath expr="//field[@name='has_work_permit']" position="after">
+                <field name="fm_health_card_expiry"/>
+                <field name="fm_dm_card_expiry"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

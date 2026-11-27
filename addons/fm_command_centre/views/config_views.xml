@@ -58,6 +58,7 @@
             <list editable="bottom">
                 <field name="month" widget="date"/>
                 <field name="location"/>
+                <field name="category_id"/>
                 <field name="cost_group"/>
                 <field name="amount" sum="Total"/>
                 <field name="note" optional="hide"/>
@@ -71,10 +72,12 @@
         <field name="arch" type="xml">
             <search>
                 <field name="location"/>
+                <field name="category_id"/>
                 <field name="cost_group"/>
                 <filter name="group_month" string="Month" context="{'group_by': 'month:month'}"/>
                 <filter name="group_location" string="Location" context="{'group_by': 'location'}"/>
                 <filter name="group_cost" string="Cost Group" context="{'group_by': 'cost_group'}"/>
+                <filter name="group_category" string="Category" context="{'group_by': 'category_id'}"/>
             </search>
         </field>
     </record>
@@ -85,8 +88,36 @@
         <field name="view_mode">list,pivot</field>
         <field name="context">{'search_default_group_month': 1}</field>
         <field name="help" type="html">
-            <p>Planned spend per month, location and cost group. The Expenses &amp; Margin
-               section of the CEO Dashboard compares it with the expenses booked.</p>
+            <p>Planned spend per month, location and category. The Budget Dashboard and the
+               Expenses &amp; Margin section of the CEO Dashboard compare it with the expenses booked.</p>
+        </field>
+    </record>
+
+    <record id="view_cc_budget_category_list" model="ir.ui.view">
+        <field name="name">fm.cc.budget.category.list</field>
+        <field name="model">fm.cc.budget.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="cost_group"/>
+                <field name="payment_plan"/>
+                <field name="unit_cost"/>
+                <field name="detail_amount"/>
+                <field name="detail_basis"/>
+                <field name="detail_note"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cc_budget_category" model="ir.actions.act_window">
+        <field name="name">Budget Categories</field>
+        <field name="res_model">fm.cc.budget.category</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p>The lines of the budget sheet. "Detail tab amount" is what the sheet's detail
+               tab works out for the category; the Budget Checks section compares it with the plan.</p>
         </field>
     </record>
 

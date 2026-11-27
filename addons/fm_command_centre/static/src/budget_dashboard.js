@@ -43,6 +43,9 @@ export class FmBudgetDashboard extends Component {
             { key: "groups", label: "Where the Money Goes" },
             { key: "score", label: "Branch Scorecard" },
             { key: "team", label: "Team & Payroll" },
+            { key: "renewals", label: "Renewals & Compliance" },
+            { key: "running", label: "Running Costs" },
+            { key: "checks", label: "Budget Checks" },
             { key: "actual", label: "Budget vs Actual" },
         ].map((s, i) => ({ ...s, num: i + 1 }));
     }
@@ -71,6 +74,18 @@ export class FmBudgetDashboard extends Component {
 
     print() {
         window.print();
+    }
+
+    /** expiry status cell, as in the PDF: "! Expired", "• 7 days", "✓ Feb 2027" */
+    statusText(r) {
+        if (r.status === "expired") return "! Expired";
+        if (r.status === "soon") return r.days === 0 ? "• today" : `• ${r.days} d`;
+        if (r.status === "none") return "no date";
+        return "✓ " + (r.due || "");
+    }
+
+    statusClass(r) {
+        return { expired: "o_cc_bad", soon: "o_cc_warn", none: "o_cc_muted", later: "o_cc_good" }[r.status] || "";
     }
 
     /** colour class per location, in the PDF's legend order */
