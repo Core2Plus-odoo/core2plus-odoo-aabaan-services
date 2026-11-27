@@ -993,11 +993,11 @@ class FmCommandCentre(models.AbstractModel):
         for col in columns:
             col['selling'] = sum(1 for r in rows if col['key'] in r['branches'])
             col['services'] = len(col['offered']) if col['offered'] is not None else col['selling']
+            col['total'] = sum(r['branches'].get(col['key'], {}).get('total', 0.0)
+                               for r in rows)
         for r in rows:
             r['offered_in'] = {c['key']: c['offered'] is None or r['key'] in c['offered']
                                for c in columns}
-            col['total'] = sum(r['branches'].get(col['key'], {}).get('total', 0.0)
-                               for r in rows)
 
         notes = {}
         if rows:
