@@ -3,7 +3,7 @@ import re
 
 from markupsafe import Markup, escape
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 
 try:
     from num2words import num2words
@@ -103,6 +103,23 @@ class SaleOrder(models.Model):
             return _("%s visits per year", count) if count else ""
         return dict(self._fields["x_visit_frequency"]._description_selection(self.env)).get(
             self.x_visit_frequency, "")
+
+    @api.onchange("payment_term_id")
+    def _onchange_payment_term_id_fm_wording(self):
+        """Keep the printed payment wording in step with Payment Terms.
+
+        The quotation and agreement PDFs print ``payment_terms_note`` when it
+        holds anything, and the agreement template fills it in. So a user who
+        changed the Payment Terms field saw the PDF keep the template's old
+        wording. Picking a term now rewrites the wording from it; it stays
+        editable afterwards for anything the term does not say."""
+        for order in self:
+            term = order.payment_term_id
+            if not term:
+                continue
+            note = term.note and re.sub(r"<[^>]+>", " ", str(term.note))
+            note = re.sub(r"\s+", " ", note or "").strip()
+            order.payment_terms_note = note or term.name
 
     def _fm_client_payment_terms(self):
         self.ensure_one()

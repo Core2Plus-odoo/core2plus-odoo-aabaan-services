@@ -14,6 +14,13 @@
                 </div>
                 <div class="o_fm_cal_head_r" t-if="state.data">
                     <div class="o_fm_cal_filters">
+                        <div class="o_fm_cal_search o_fm_noprint">
+                            <i class="fa fa-search"/>
+                            <input type="search" placeholder="Search job, customer, contract, technician…"
+                                   t-att-value="state.search"
+                                   t-on-keydown="(ev) => this.onSearch(ev)"
+                                   t-on-search="(ev) => this.onSearch(ev)"/>
+                        </div>
                         <select class="o_fm_cal_sel" t-on-change="(ev) => this.onFilter('technicianId', ev)">
                             <option value="">All technicians</option>
                             <t t-foreach="state.data.technicians" t-as="u" t-key="u.id">
@@ -53,6 +60,10 @@
                 </div>
             </div>
 
+            <div t-if="state.search and !state.loading" class="o_fm_cal_found o_fm_noprint">
+                Showing visits matching "<b t-esc="state.search"/>": <t t-esc="state.data.kpis.month_total"/> this month
+                <a href="#" t-on-click.prevent="() => this.clearSearch()">Clear</a>
+            </div>
             <div t-if="state.loading" class="o_fm_cal_loading"><i class="fa fa-circle-o-notch fa-spin"/> Loading…</div>
 
             <t t-if="!state.loading and state.data">
@@ -80,14 +91,14 @@
                                     </div>
                                     <div class="o_fm_cal_evts">
                                         <t t-foreach="c.events" t-as="e" t-key="e.id">
-                                            <div t-if="e_index &lt; 3 or state.expanded[c.date]"
-                                                 class="o_fm_cal_evt" t-on-click="() => this.openVisit(e.id)"
+                                            <div t-attf-class="o_fm_cal_evt {{e_index &lt; 3 or state.expanded[c.date] ? '' : 'o_fm_fold'}}"
+                                                 t-on-click="() => this.openVisit(e.id)"
                                                  t-attf-style="background: {{e.color}};"
                                                  t-att-title="e.status_label + ': ' + (e.sub ? e.title + ' — ' + e.sub : e.title)">
-                                                <span class="o_fm_cal_txt"><t t-esc="e.title"/></span>
+                                                <span class="o_fm_cal_txt"><t t-esc="e.name"/></span>
                                             </div>
                                         </t>
-                                        <div t-if="c.more" class="o_fm_cal_more" t-on-click="() => this.toggleDay(c.date)">
+                                        <div t-if="c.more" class="o_fm_cal_more o_fm_noprint" t-on-click="() => this.toggleDay(c.date)">
                                             <t t-if="state.expanded[c.date]"><i class="fa fa-angle-up"/> Show less</t>
                                             <t t-else="">+<t t-esc="c.more"/> more</t>
                                         </div>
