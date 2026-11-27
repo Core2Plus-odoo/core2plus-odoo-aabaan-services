@@ -408,6 +408,10 @@
                         </div>
                     </div>
                     <p class="o_cc_empty" t-if="!d.services.rows.length">No invoiced services this month.</p>
+                    <p class="o_cc_tablenote">
+                        <t t-if="d.services.notes.unsold and d.services.notes.unsold.length">Nothing invoiced this month: <t t-esc="d.services.notes.unsold.join(', ')"/>. </t>
+                        <t t-if="d.services.recharged">Lab tests &amp; attestation (AED <t t-esc="k(d.services.recharged)"/>) are recharged fees and not counted as revenue.</t>
+                    </p>
                     <div class="o_cc_two" t-if="d.services.notes.top">
                         <div class="o_cc_note o_cc_note_green">
                             🐞 <b><t t-esc="d.services.notes.top.names.join(', ')"/> bring <t t-esc="pct(d.services.notes.top.share)"/> of revenue</b>, and most of it is <t t-esc="d.services.notes.top.mostly_amc ? 'AMC' : 'cash sales'"/>.
@@ -429,7 +433,7 @@
                     <table class="o_cc_table o_cc_matrix">
                         <thead><tr>
                             <th>Service</th>
-                            <th t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center"><t t-esc="c.name.toUpperCase()"/><div class="o_cc_th_sub"><t t-esc="c.services"/> services</div></th>
+                            <th t-foreach="d.services.columns" t-as="c" t-key="c.key" class="text-center"><t t-esc="c.name.toUpperCase()"/><div class="o_cc_th_sub"><t t-esc="c.services"/> services<t t-if="c.offered"> · <t t-esc="c.selling"/> sold</t></div></th>
                             <th class="text-center">Total</th>
                         </tr></thead>
                         <tbody>
@@ -441,7 +445,8 @@
                                         <b t-esc="k(cell.total)"/>
                                         <div class="o_cc_mix"><div class="o_cc_mix_amc" t-att-style="'width:' + (cell.amc_share || 0) + '%'"/></div>
                                     </t>
-                                    <span t-else="" class="text-muted">—</span>
+                                    <span t-elif="r.offered_in[c.key]" class="text-muted">—</span>
+                                    <span t-else="" class="o_cc_na">not offered</span>
                                 </td>
                                 <td class="text-center o_cc_strong" t-esc="k(r.total)"/>
                             </tr>
@@ -453,9 +458,10 @@
                         </tr></tfoot>
                     </table>
                     <div class="o_cc_note o_cc_note_orange" t-if="d.services.notes.fewest">
-                        📍 <b><t t-esc="d.services.notes.fewest.name"/> sells <t t-esc="d.services.notes.fewest.services"/> service<t t-if="d.services.notes.fewest.services !== 1">s</t></b> and earns AED <t t-esc="k(d.services.notes.fewest.total)"/>.
+                        📍 <b><t t-esc="d.services.notes.fewest.name"/> sold <t t-esc="d.services.notes.fewest.services"/> of its <t t-esc="d.services.notes.fewest.offered"/> service<t t-if="d.services.notes.fewest.offered !== 1">s</t></b> this month and earned AED <t t-esc="k(d.services.notes.fewest.total)"/>.
                         <t t-if="d.services.notes.exclusive"> <t t-esc="d.services.notes.exclusive.name"/> is the only branch with <t t-esc="d.services.notes.exclusive.services.join(', ')"/>.</t>
                     </div>
+                    <p class="o_cc_tablenote">Services and branches as in Aaban's "Our Services by Emirate". — = offered, nothing invoiced this month.<t t-if="d.services.recharged"> Lab tests &amp; attestation (AED <t t-esc="k(d.services.recharged)"/>) are recharged fees, not a service, and are left out of revenue.</t></p>
                     <t t-call="fm_command_centre.Footer"><t t-set="page" t-value="7"/></t>
                 </section>
 
