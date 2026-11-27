@@ -5,3 +5,6 @@ access_fm_cc_sales_target_admin,fm.cc.sales.target admin,model_fm_cc_sales_targe
 access_fm_cc_budget_viewer,fm.cc.budget viewer,model_fm_cc_budget,group_command_centre_viewer,1,0,0,0
 access_fm_cc_budget_manager,fm.cc.budget manager,model_fm_cc_budget,account.group_account_manager,1,1,1,1
 access_fm_cc_budget_admin,fm.cc.budget admin,model_fm_cc_budget,base.group_system,1,1,1,1
+access_fm_cc_budget_category_viewer,fm.cc.budget.category viewer,model_fm_cc_budget_category,group_command_centre_viewer,1,0,0,0
+access_fm_cc_budget_category_manager,fm.cc.budget.category manager,model_fm_cc_budget_category,account.group_account_manager,1,1,1,1
+access_fm_cc_budget_category_admin,fm.cc.budget.category admin,model_fm_cc_budget_category,base.group_system,1,1,1,1

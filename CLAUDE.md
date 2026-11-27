@@ -124,6 +124,10 @@ creating a new one.
     confirming a contract that sells one puts the order on the
     `sale.subscription.plan` matching its billing frequency. The legacy
     `fm.contract` layer (its **Start Subscription** button) is gone.
+10b. `fm_fleet` — thin layer on the standard **Fleet** app: FM branch,
+    registration and insurance expiry on `fleet.vehicle`, read by the
+    Budget Dashboard's Renewals & Compliance section. Not auto-installed;
+    install it from Apps (it pulls in Fleet).
 11. `fm_aabaan_config` — **seed data**: branches, service categories, UAE
     compliance regimes, service products. Makes the platform Aabaan-ready.
 12. `fm_portal` — **the customer portal** (`/my`). Invoices + online payment

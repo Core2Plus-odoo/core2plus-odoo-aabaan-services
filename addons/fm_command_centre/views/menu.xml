@@ -67,6 +67,12 @@
               action="action_cc_budget"
               sequence="25"/>
 
+    <menuitem id="menu_cc_budget_category"
+              name="Budget Categories"
+              parent="menu_command_centre_config"
+              action="action_cc_budget_category"
+              sequence="26"/>
+
     <menuitem id="menu_cc_products"
               name="Service Classification"
               parent="menu_command_centre_config"

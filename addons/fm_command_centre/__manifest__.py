@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'FM Command Centre',
-    'version': '19.0.3.5.0',
+    'version': '19.0.3.6.0',
     'category': 'Reporting',
     'summary': 'CEO Dashboard — AMC contracts and cash sales side by side, '
                'per branch, live from Odoo',
@@ -28,8 +28,11 @@ PDF, every figure read live from the database:
 
 A second page, **Budget Dashboard** ("One Budget, Every Branch"), shows
 the client's budget sheet (CEO Dashboard → Configuration → Budget): month
-by month and branch by branch, by cost group, the payroll plan with visas
-due, and the plan against the expenses booked in Odoo.
+by month and branch by branch, by cost group and category, the payroll
+plan with visas due, renewals and compliance (vehicles once FM Fleet is
+installed, health and DM cards on the employee), running costs, checks of
+the plan against the sheet's detail tabs, and the plan against the
+expenses booked in Odoo.
 
 Revenue stream (AMC / Cash), service and branch are stored on invoices,
 contracts and visits by derivation and stay editable. Targets live on the
@@ -51,6 +54,8 @@ under Command Centre → Configuration. The page prints to PDF.
         'security/ir.model.access.csv',
         'views/config_views.xml',
         'views/menu.xml',
+        'views/hr_employee_views.xml',
+        'data/budget_categories.xml',
         'data/budget_2026_27.xml',
     ],
     'assets': {
