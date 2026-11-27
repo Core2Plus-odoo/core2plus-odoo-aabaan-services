@@ -636,3 +636,52 @@ $cc-soft: #f4f5f9;
 // Sales Team: each bar segment and deal count opens its own records
 .o_cc_seg { cursor: pointer; }
 .o_cc_seg:hover, .o_cc_link:hover { filter: brightness(0.92); text-decoration: underline; }
+
+// ---------- Budget Dashboard: same look, five location and seven group colours ----------
+$cc-locs: ($cc-navy, $cc-orange, $cc-blue, $cc-teal, #8a94ab);
+$cc-grps: ($cc-navy, $cc-blue, $cc-orange, $cc-teal, $cc-green, $cc-amber-bg, #8a94ab);
+.o_cc_root.o_cc_budget {
+    @for $i from 1 through 5 {
+        $c: nth($cc-locs, $i);
+        rect.o_cc_loc#{$i - 1} { fill: $c; }
+        .o_cc_lg.o_cc_loc#{$i - 1}::before { background: $c; }
+        .o_cc_loctile.o_cc_loc#{$i - 1} { border-top: 5px solid $c; b { color: $c; } }
+    }
+    @for $i from 1 through 7 {
+        $c: nth($cc-grps, $i);
+        .o_cc_seg.o_cc_grp#{$i - 1} { background: $c; }
+        .o_cc_lg.o_cc_grp#{$i - 1}::before { background: $c; }
+    }
+    .o_cc_legend_wrap { flex-wrap: wrap; gap: 8px 18px; }
+    .o_cc_period { font-weight: 800; min-width: 170px; text-align: center; align-self: center; }
+    .o_cc_svg {
+        .o_cc_avgline { stroke: $cc-ink; stroke-width: 2; stroke-dasharray: 6 5; }
+        .o_cc_bar_future { fill: $cc-line; }
+        .o_cc_bar_orange { fill: $cc-orange; }
+        .o_cc_bar_red { fill: $cc-red; }
+        .o_cc_click { cursor: pointer; }
+        .o_cc_click:hover rect { filter: brightness(1.08); }
+    }
+    .o_cc_loctiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .o_cc_loctile {
+        background: $cc-soft;
+        border-radius: 12px;
+        padding: 12px 10px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        b { font-size: 26px; font-weight: 800; line-height: 1.15; }
+        span { font-weight: 700; }
+        small { color: $cc-muted; font-size: 12px; }
+    }
+    .o_cc_stack_tot { align-self: center; font-weight: 700; font-size: 13px; white-space: nowrap; padding-left: 8px; }
+    .o_cc_table {
+        tr.o_cc_total td { font-weight: 800; background: $cc-soft; color: $cc-ink; }
+        tr.o_cc_future td { color: $cc-muted; }
+    }
+}

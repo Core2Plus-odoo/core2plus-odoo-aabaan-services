@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_fm_cc_sales_target_viewer,fm.cc.sales.target viewer,model_fm_cc_sales_target,group_command_centre_viewer,1,0,0,0
 access_fm_cc_sales_target_manager,fm.cc.sales.target manager,model_fm_cc_sales_target,account.group_account_manager,1,1,1,1
 access_fm_cc_sales_target_admin,fm.cc.sales.target admin,model_fm_cc_sales_target,base.group_system,1,1,1,1
+access_fm_cc_budget_viewer,fm.cc.budget viewer,model_fm_cc_budget,group_command_centre_viewer,1,0,0,0
+access_fm_cc_budget_manager,fm.cc.budget manager,model_fm_cc_budget,account.group_account_manager,1,1,1,1
+access_fm_cc_budget_admin,fm.cc.budget admin,model_fm_cc_budget,base.group_system,1,1,1,1
