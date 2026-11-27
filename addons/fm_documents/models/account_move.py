@@ -141,7 +141,10 @@ class AccountMove(models.Model):
         self.ensure_one()
         rows, counter = [], 0
         for line in self.invoice_line_ids:
-            if line.display_type:
+            # Odoo 17+ marks a chargeable line display_type 'product', so a
+            # plain truth test left every line unnumbered and the template
+            # dropped the # cell, shifting the whole row one column left.
+            if line.display_type in ("line_section", "line_note"):
                 rows.append({"no": None, "line": line})
             else:
                 counter += 1
