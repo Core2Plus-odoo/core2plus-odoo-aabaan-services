@@ -521,9 +521,10 @@
                     <table class="o_cc_table">
                         <thead><tr><th>Name</th><th>🔁 AMC Deals</th><th>💵 Cash Deals</th><th>Total</th><th>Target</th><th>Achv</th><th>AMC Mix</th></tr></thead>
                         <tbody>
-                            <tr t-foreach="d.sales.rows" t-as="r" t-key="r.id">
+                            <tr t-foreach="d.sales.rows" t-as="r" t-key="r.id" t-on-click="() => this.open(r.drill)">
                                 <td class="o_cc_strong" t-esc="r.name"/>
-                                <td t-esc="r.amc"/><td t-esc="r.cash"/>
+                                <td t-esc="r.amc" t-on-click.stop="() => this.open(r.drill_amc)"/>
+                                <td t-esc="r.cash" t-on-click.stop="() => this.open(r.drill_cash)"/>
                                 <td class="o_cc_strong" t-esc="r.total"/>
                                 <td t-esc="r.target || '—'"/>
                                 <td><b t-att-class="ach(r.achieved)" t-esc="pct(r.achieved)"/></td>

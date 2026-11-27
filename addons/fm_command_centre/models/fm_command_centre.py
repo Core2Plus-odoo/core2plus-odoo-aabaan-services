@@ -966,17 +966,19 @@ class FmCommandCentre(models.AbstractModel):
     def _sales_team(self, ctx):
         start, end = ctx['start'], ctx['end']
         amc_deals = defaultdict(int)
+        amc_ids = defaultdict(list)
         users = {}
         for c in self._contracts():
             if c['start'] and start <= c['start'] < end and c['user']:
                 amc_deals[c['user'].id] += 1
+                amc_ids[c['user'].id].append(c['id'])
                 users[c['user'].id] = c['user']
         cash_deals = defaultdict(int)
         Move = self.env['account.move']
+        cash_dom = self._inv_domain(ctx['states'], start, end, ('out_invoice',)) \
+            + [('fm_cc_stream', '=', 'cash')]
         for user, count in Move._read_group(
-                self._inv_domain(ctx['states'], start, end, ('out_invoice',))
-                + [('fm_cc_stream', '=', 'cash')],
-                ['invoice_user_id'], ['__count']):
+                cash_dom, ['invoice_user_id'], ['__count']):
             if user:
                 cash_deals[user.id] += count
                 users[user.id] = user
@@ -989,10 +991,18 @@ class FmCommandCentre(models.AbstractModel):
             a, c = amc_deals.get(uid, 0), cash_deals.get(uid, 0)
             total = a + c
             target = targets.get(uid, 0)
+            drill_amc = {'model': 'sale.order',
+                         'domain': [('id', 'in', amc_ids.get(uid, []))],
+                         'name': 'AMC deals — %s' % user.name}
+            drill_cash = {'model': 'account.move',
+                          'domain': cash_dom + [('invoice_user_id', '=', uid)],
+                          'name': 'Cash deals — %s' % user.name}
             rows.append({
                 'id': uid, 'name': user.name, 'amc': a, 'cash': c, 'total': total,
                 'target': target, 'achieved': self._pct(total, target, 0),
                 'amc_mix': self._pct(a, total, 0),
+                'drill_amc': drill_amc, 'drill_cash': drill_cash,
+                'drill': drill_amc if a >= c and a else drill_cash,
             })
         rows.sort(key=lambda r: (-r['total'], r['name']))
         above = [r['name'] for r in rows if r['target'] and total_ok(r)]
