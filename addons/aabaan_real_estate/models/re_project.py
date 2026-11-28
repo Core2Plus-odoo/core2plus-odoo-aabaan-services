@@ -27,7 +27,7 @@ class ReProject(models.Model):
     name = fields.Char(required=True, tracking=True)
     sequence = fields.Integer(default=10)
     active = fields.Boolean(default=True)
-    company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+    company_id = fields.Many2one('res.company', default=lambda s: s._re_default_company(), index=True)
     developer_id = fields.Many2one('re.developer', tracking=True)
     image = fields.Image('Cover photo', max_width=1920, max_height=1920)
     image_512 = fields.Image(related='image', max_width=512, max_height=512, store=True)
@@ -52,7 +52,7 @@ class ReProject(models.Model):
     price_from = fields.Monetary(compute='_compute_units', store=True, aggregator='min')
     price_to = fields.Monetary(compute='_compute_units', store=True, aggregator='max')
     unit_types = fields.Char(compute='_compute_units', store=True)
-    currency_id = fields.Many2one('res.currency', default=lambda s: s.env.company.currency_id)
+    currency_id = fields.Many2one('res.currency', default=lambda s: s._re_default_company().currency_id)
     color = fields.Integer()
     price_label = fields.Char(compute='_compute_labels')
     handover_label = fields.Char(compute='_compute_labels')
@@ -62,6 +62,17 @@ class ReProject(models.Model):
         for p in self:
             p.price_label = short_aed(p.price_from)
             p.handover_label = p.handover_date.strftime('%b %Y') if p.handover_date else ''
+
+    @api.model
+    def _re_default_company(self):
+        """Aabaan Real Estate is its own company: new projects go to the
+        company of the real-estate sales team, whichever company the user
+        happens to be working in."""
+        team = self.env.ref('aabaan_real_estate.crm_team_real_estate', raise_if_not_found=False)
+        company = team.sudo().company_id if team else False
+        if company and company in self.env.user.company_ids:
+            return company
+        return self.env.company
 
     @api.depends('payment_plan_ids.percent', 'payment_plan_ids.name')
     def _compute_payment_plan_summary(self):
