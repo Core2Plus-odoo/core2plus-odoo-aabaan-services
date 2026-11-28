@@ -23,6 +23,11 @@ $re-green: #1f9d6b;
     .o_field_image, .o_field_image > div, .o_field_image img { width: 100%; height: 100%; }
     .o_re_cover_img, img { width: 100%; height: 100%; object-fit: cover; }
 }
+.o_re_noimg {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, $re-navy 0%, #33467a 55%, $re-orange 160%);
+    i { font-size: 54px; color: rgba(255, 255, 255, .35); }
+}
 .o_re_badge {
     position: absolute; top: 10px; left: 10px;
     padding: 3px 10px; border-radius: 999px;
@@ -45,7 +50,7 @@ $re-green: #1f9d6b;
 .o_re_sub { color: #6b7385; font-size: 12px; margin-top: 2px; }
 .o_re_chips, .o_re_specs {
     display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
-    span { background: #f3f5f9; border-radius: 6px; padding: 2px 8px; font-size: 11.5px; color: $re-ink; }
+    span { background: #f3f5f9; border-radius: 6px; padding: 2px 8px; font-size: 11.5px; color: $re-ink; white-space: nowrap; }
 }
 .o_re_specs span { background: #fff4ec; color: #8a4510; font-weight: 600; }
 .o_re_avail {
