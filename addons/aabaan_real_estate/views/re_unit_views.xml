@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="re_unit_view_kanban" model="ir.ui.view">
+        <field name="name">re.unit.kanban</field>
+        <field name="model">re.unit</field>
+        <field name="arch" type="xml">
+            <kanban class="o_re_kanban" sample="1" default_group_by="state">
+                <field name="currency_id"/>
+                <field name="state"/>
+                <field name="in_shortlist"/>
+                <field name="shortlist_mode"/>
+                <field name="publish_bayut"/>
+                <field name="publish_propertyfinder"/>
+                <field name="publish_dubizzle"/>
+                <field name="purpose"/>
+                <progressbar field="state" colors='{"available": "success", "reserved": "warning", "sold": "danger", "rented": "info"}'/>
+                <templates>
+                    <t t-name="card" class="p-0 o_re_card">
+                        <div class="o_re_cover o_re_cover_sm">
+                            <field name="cover" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <span t-attf-class="o_re_badge o_re_state_{{record.state.raw_value}}"><field name="state"/></span>
+                            <span class="o_re_price"><field name="price" widget="monetary"/><t t-if="record.purpose.raw_value === 'rent'"> /yr</t></span>
+                        </div>
+                        <main class="o_re_body">
+                            <div class="o_re_title"><field name="project_id"/> · <field name="name"/></div>
+                            <div class="o_re_specs">
+                                <span t-if="record.beds_label.raw_value"><i class="fa fa-bed me-1"/><field name="beds_label"/></span>
+                                <span t-if="record.bathrooms.raw_value"><i class="fa fa-bath me-1"/><field name="bathrooms"/></span>
+                                <span t-if="record.size_sqft.raw_value"><i class="fa fa-arrows-alt me-1"/><field name="size_sqft"/> sq ft</span>
+                                <span><field name="unit_type"/></span>
+                            </div>
+                            <div class="o_re_sub"><i class="fa fa-map-marker me-1"/><field name="community"/><t t-if="record.view.raw_value"> · <field name="view"/> view</t></div>
+                            <div class="o_re_portals">
+                                <span class="o_re_ref"><field name="reference"/></span>
+                                <span t-if="record.publish_bayut.raw_value" class="o_re_portal o_re_bayut">Bayut</span>
+                                <span t-if="record.publish_propertyfinder.raw_value" class="o_re_portal o_re_pf">PF</span>
+                                <span t-if="record.publish_dubizzle.raw_value" class="o_re_portal o_re_dubizzle">Dubizzle</span>
+                            </div>
+                        </main>
+                        <footer t-if="record.shortlist_mode.raw_value" class="px-2 pb-2">
+                            <button name="action_toggle_shortlist" type="object"
+                                    t-attf-class="btn btn-sm w-100 {{record.in_shortlist.raw_value ? 'btn-secondary' : 'btn-primary'}}">
+                                <t t-if="record.in_shortlist.raw_value"><i class="fa fa-check me-1"/>Shortlisted</t>
+                                <t t-else=""><i class="fa fa-star me-1"/>Add to shortlist</t>
+                            </button>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="re_unit_view_list" model="ir.ui.view">
+        <field name="name">re.unit.list</field>
+        <field name="model">re.unit</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="reference" optional="show"/>
+                <field name="project_id"/>
+                <field name="name"/>
+                <field name="unit_type"/>
+                <field name="bedrooms"/>
+                <field name="size_sqft"/>
+                <field name="view" optional="hide"/>
+                <field name="community" optional="show"/>
+                <field name="price" widget="monetary" sum="Total"/>
+                <field name="price_per_sqft" widget="monetary" optional="hide"/>
+                <field name="purpose" optional="hide"/>
+                <field name="published" widget="boolean" optional="show" string="On portals"/>
+                <field name="state" widget="badge" decoration-success="state == 'available'" decoration-warning="state == 'reserved'" decoration-muted="state in ('sold', 'rented')"/>
+                <field name="currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="re_unit_view_form" model="ir.ui.view">
+        <field name="name">re.unit.form</field>
+        <field name="model">re.unit</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_leads" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="lead_count" widget="statinfo" string="Enquiries"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="On portals" bg_color="text-bg-success" invisible="not published"/>
+                    <field name="image" widget="image" class="oe_avatar o_re_form_cover" options="{'size': [240, 160]}"/>
+                    <div class="oe_title">
+                        <div class="text-muted"><field name="reference" class="oe_inline"/></div>
+                        <h1><field name="project_id" placeholder="Project" class="oe_inline"/> · <field name="name" placeholder="Unit no." class="oe_inline"/></h1>
+                        <field name="purpose" widget="radio" options="{'horizontal': true}"/>
+                    </div>
+                    <group>
+                        <group string="Unit">
+                            <field name="unit_type"/>
+                            <field name="bedrooms"/>
+                            <field name="bathrooms"/>
+                            <field name="size_sqft"/>
+                            <field name="floor"/>
+                            <field name="view"/>
+                        </group>
+                        <group string="Price">
+                            <field name="price" widget="monetary"/>
+                            <field name="price_per_sqft" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="community"/>
+                            <field name="handover_date"/>
+                            <field name="project_status"/>
+                            <field name="published" invisible="1"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Portal listing" name="listing">
+                            <group>
+                                <group>
+                                    <field name="publish_bayut"/>
+                                    <field name="publish_propertyfinder"/>
+                                    <field name="publish_dubizzle"/>
+                                </group>
+                                <group>
+                                    <field name="permit_number" required="publish_bayut or publish_propertyfinder or publish_dubizzle"/>
+                                    <field name="agent_id"/>
+                                </group>
+                            </group>
+                            <field name="listing_title" placeholder="Listing title, e.g. Sea-view 2BR with payment plan"/>
+                            <field name="listing_description" placeholder="Listing description for the portals…"/>
+                        </page>
+                        <page string="Photos" name="photos">
+                            <field name="gallery_ids" mode="kanban">
+                                <kanban>
+                                    <templates>
+                                        <t t-name="card" class="p-0">
+                                            <field name="image" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                                <form>
+                                    <group><field name="image" widget="image"/><field name="name"/><field name="sequence"/></group>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Shortlisted for" name="leads">
+                            <field name="lead_ids" readonly="1">
+                                <list><field name="name"/><field name="partner_name"/><field name="user_id"/><field name="stage_id"/></list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="re_unit_view_search" model="ir.ui.view">
+        <field name="name">re.unit.search</field>
+        <field name="model">re.unit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', '|', ('name', 'ilike', self), ('reference', 'ilike', self), ('project_id', 'ilike', self)]"/>
+                <field name="project_id"/>
+                <field name="community"/>
+                <field name="developer_id"/>
+                <filter name="available" string="Available" domain="[('state', '=', 'available')]"/>
+                <filter name="published" string="On portals" domain="[('published', '=', True)]"/>
+                <separator/>
+                <filter name="sale" string="For sale" domain="[('purpose', '=', 'sale')]"/>
+                <filter name="rent" string="For rent" domain="[('purpose', '=', 'rent')]"/>
+                <separator/>
+                <filter name="offplan" string="Off-plan" domain="[('project_status', '=', 'offplan')]"/>
+                <filter name="ready" string="Ready" domain="[('project_status', '=', 'ready')]"/>
+                <filter name="g_project" string="Project" context="{'group_by': 'project_id'}"/>
+                <filter name="g_type" string="Type" context="{'group_by': 'unit_type'}"/>
+                <filter name="g_beds" string="Bedrooms" context="{'group_by': 'bedrooms'}"/>
+                <filter name="g_state" string="Status" context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_re_unit" model="ir.actions.act_window">
+        <field name="name">Units</field>
+        <field name="res_model">re.unit</field>
+        <field name="view_mode">kanban,list,form,pivot,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add your first unit</p>
+            <p>Tick Bayut, Property Finder or Dubizzle on a unit to list it; enquiries come back as leads against it.</p>
+        </field>
+    </record>
+</odoo>

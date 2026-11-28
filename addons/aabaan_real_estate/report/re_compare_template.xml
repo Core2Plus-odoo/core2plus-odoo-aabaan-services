@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_re_compare">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-set="o" t-value="docs[:1]"/>
+                <div class="page re-doc">
+                    <div class="re-hero">
+                        <div class="re-kicker"><t t-esc="'PROJECT COMPARISON' if len(docs) &gt; 1 else 'PROJECT BROCHURE'"/></div>
+                        <h1 t-esc="' vs '.join(docs[:4].mapped('name'))"/>
+                    </div>
+                    <table class="re-compare">
+                        <thead>
+                            <tr>
+                                <th/>
+                                <th t-foreach="docs[:4]" t-as="p">
+                                    <img t-if="p.image" t-att-src="image_data_uri(p.image)"/>
+                                    <div class="re-unit-title" t-esc="p.name"/>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Developer</td><td t-foreach="docs[:4]" t-as="p" t-esc="p.developer_id.name or '—'"/></tr>
+                            <tr><td>Location</td><td t-foreach="docs[:4]" t-as="p"><t t-esc="p.community"/>, <t t-esc="dict(p._fields['emirate'].selection).get(p.emirate)"/></td></tr>
+                            <tr><td>Status</td><td t-foreach="docs[:4]" t-as="p" t-esc="'Off-plan' if p.status == 'offplan' else 'Ready'"/></tr>
+                            <tr><td>Handover</td><td t-foreach="docs[:4]" t-as="p" t-esc="p.handover_date and p.handover_date.strftime('%b %Y') or '—'"/></tr>
+                            <tr><td>Price from</td><td t-foreach="docs[:4]" t-as="p"><b t-if="p.price_from" t-esc="p.price_from" t-options="{'widget': 'monetary', 'display_currency': p.currency_id}"/><span t-else="">—</span></td></tr>
+                            <tr><td>Unit types</td><td t-foreach="docs[:4]" t-as="p" t-esc="p.unit_types or '—'"/></tr>
+                            <tr><td>Available</td><td t-foreach="docs[:4]" t-as="p"><t t-esc="p.available_count"/> of <t t-esc="p.unit_count"/> units</td></tr>
+                            <tr><td>Payment plan</td><td t-foreach="docs[:4]" t-as="p">
+                                <div t-foreach="p.payment_plan_ids.sorted('sequence')" t-as="l"><b><t t-esc="'%g' % l.percent"/>%</b> <t t-esc="l.name"/></div>
+                                <span t-if="not p.payment_plan_ids">—</span>
+                            </td></tr>
+                            <tr><td>Amenities</td><td t-foreach="docs[:4]" t-as="p" t-esc="', '.join(p.amenity_ids.mapped('name')) or '—'"/></tr>
+                            <tr><td>Nearby</td><td t-foreach="docs[:4]" t-as="p" t-esc="p.nearby or '—'"/></tr>
+                        </tbody>
+                    </table>
+                    <t t-if="len(docs) == 1">
+                        <div class="re-desc" t-if="o.description" t-out="o.description"/>
+                        <t t-foreach="o.unit_ids.filtered(lambda u: u.state == 'available')[:6]" t-as="u">
+                            <t t-call="aabaan_real_estate.re_unit_block"/>
+                        </t>
+                    </t>
+                    <p class="re-small">Prices and availability are subject to change and confirmation by the developer.</p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="re_unit_block">
+        <div class="re-unit">
+            <div class="re-unit-photo">
+                <img t-if="u.image or u.project_id.image" t-att-src="image_data_uri(u.image or u.project_id.image)"/>
+                <span t-attf-class="re-pill re-{{u.project_status}}" t-esc="'Off-plan' if u.project_status == 'offplan' else 'Ready'"/>
+            </div>
+            <div class="re-unit-body">
+                <div class="re-unit-title"><t t-esc="u.project_id.name"/> · <t t-esc="u.name"/></div>
+                <div class="re-muted"><t t-esc="u.community"/><t t-if="u.developer_id"> · by <t t-esc="u.developer_id.name"/></t></div>
+                <div class="re-price"><t t-esc="u.price" t-options="{'widget': 'monetary', 'display_currency': u.currency_id}"/><t t-if="u.purpose == 'rent'"> / year</t></div>
+                <table class="re-specs">
+                    <tr>
+                        <td><b t-esc="u.beds_label or '—'"/><span>Bedrooms</span></td>
+                        <td><b t-esc="u.bathrooms or '—'"/><span>Bathrooms</span></td>
+                        <td><b t-esc="'{:,.0f}'.format(u.size_sqft) if u.size_sqft else '—'"/><span>sq ft</span></td>
+                        <td><b t-esc="u.view or '—'"/><span>View</span></td>
+                    </tr>
+                </table>
+                <div class="re-muted" t-if="u.handover_date">Handover <t t-esc="u.handover_date.strftime('%b %Y')"/></div>
+                <div class="re-plan" t-if="u.project_id.payment_plan_ids">
+                    <t t-foreach="u.project_id.payment_plan_ids.sorted('sequence')" t-as="p">
+                        <span><b><t t-esc="'%g' % p.percent"/>%</b> <t t-esc="p.name"/></span>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="report_re_proposal">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="lead">
+                <t t-call="web.external_layout">
+                    <div class="page re-doc">
+                        <div class="re-hero">
+                            <div class="re-kicker">PROPERTY PROPOSAL</div>
+                            <h1>Selected for <t t-esc="lead.partner_name or lead.contact_name or lead.name"/></h1>
+                            <div class="re-muted">
+                                <t t-if="lead.re_unit_type"><t t-esc="dict(lead._fields['re_unit_type'].selection)[lead.re_unit_type]"/> · </t>
+                                <t t-if="lead.re_bedrooms"><t t-esc="lead.re_bedrooms"/>+ bedrooms · </t>
+                                <t t-if="lead.re_budget_max">budget up to <t t-esc="lead.re_budget_max" t-options="{'widget': 'monetary', 'display_currency': lead.company_currency}"/> · </t>
+                                <t t-esc="len(lead.re_shortlist_ids)"/> option<t t-if="len(lead.re_shortlist_ids) != 1">s</t>
+                            </div>
+                        </div>
+                        <t t-foreach="lead.re_shortlist_ids" t-as="u">
+                            <t t-call="aabaan_real_estate.re_unit_block"/>
+                        </t>
+                        <div class="re-agent">
+                            <b>Your advisor:</b> <t t-esc="lead.user_id.name or user.name"/>
+                            <t t-set="agent" t-value="(lead.user_id or user).partner_id"/>
+                            <t t-if="agent.phone"> · <t t-esc="agent.phone"/></t>
+                            <t t-if="agent.email"> · <t t-esc="agent.email"/></t>
+                        </div>
+                        <p class="re-small">Prices and availability are subject to change and confirmation by the developer.</p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

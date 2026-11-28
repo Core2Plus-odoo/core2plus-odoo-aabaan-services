@@ -1,0 +1,13 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_re_developer_user,re.developer user,model_re_developer,sales_team.group_sale_salesman,1,1,1,0
+access_re_developer_manager,re.developer manager,model_re_developer,sales_team.group_sale_manager,1,1,1,1
+access_re_project_user,re.project user,model_re_project,sales_team.group_sale_salesman,1,1,1,0
+access_re_project_manager,re.project manager,model_re_project,sales_team.group_sale_manager,1,1,1,1
+access_re_unit_user,re.unit user,model_re_unit,sales_team.group_sale_salesman,1,1,1,0
+access_re_unit_manager,re.unit manager,model_re_unit,sales_team.group_sale_manager,1,1,1,1
+access_re_unit_image_user,re.unit.image user,model_re_unit_image,sales_team.group_sale_salesman,1,1,1,0
+access_re_unit_image_manager,re.unit.image manager,model_re_unit_image,sales_team.group_sale_manager,1,1,1,1
+access_re_payment_plan_line_user,re.payment.plan.line user,model_re_payment_plan_line,sales_team.group_sale_salesman,1,1,1,0
+access_re_payment_plan_line_manager,re.payment.plan.line manager,model_re_payment_plan_line,sales_team.group_sale_manager,1,1,1,1
+access_re_amenity_user,re.amenity user,model_re_amenity,sales_team.group_sale_salesman,1,1,1,0
+access_re_amenity_manager,re.amenity manager,model_re_amenity,sales_team.group_sale_manager,1,1,1,1

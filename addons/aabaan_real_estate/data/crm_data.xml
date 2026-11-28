@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_re_unit_reference" model="ir.sequence">
+        <field name="name">Real estate listing reference</field>
+        <field name="code">re.unit.reference</field>
+        <field name="prefix">AAB-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="crm_team_real_estate" model="crm.team">
+        <field name="name">Aabaan Real Estate</field>
+        <field name="re_is_real_estate" eval="True"/>
+        <field name="use_opportunities" eval="True"/>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- The real-estate pipeline: only this team sees these stages. -->
+    <record id="stage_re_new" model="crm.stage">
+        <field name="name">New enquiry</field><field name="sequence">1</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_contacted" model="crm.stage">
+        <field name="name">Contacted</field><field name="sequence">2</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_qualified" model="crm.stage">
+        <field name="name">Qualified</field><field name="sequence">3</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_viewing" model="crm.stage">
+        <field name="name">Viewing / Meeting</field><field name="sequence">4</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_offer" model="crm.stage">
+        <field name="name">Offer / Negotiation</field><field name="sequence">5</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_booking" model="crm.stage">
+        <field name="name">Booking / EOI</field><field name="sequence">6</field>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+    <record id="stage_re_won" model="crm.stage">
+        <field name="name">Closed won</field><field name="sequence">7</field>
+        <field name="is_won" eval="True"/>
+        <field name="team_ids" eval="[(6, 0, [ref('crm_team_real_estate')])]"/>
+    </record>
+
+    <record id="amenity_pool" model="re.amenity"><field name="name">Swimming pool</field><field name="color">4</field></record>
+    <record id="amenity_gym" model="re.amenity"><field name="name">Gym</field><field name="color">2</field></record>
+    <record id="amenity_parking" model="re.amenity"><field name="name">Covered parking</field><field name="color">7</field></record>
+    <record id="amenity_kids" model="re.amenity"><field name="name">Kids play area</field><field name="color">3</field></record>
+    <record id="amenity_security" model="re.amenity"><field name="name">24/7 security</field><field name="color">1</field></record>
+    <record id="amenity_beach" model="re.amenity"><field name="name">Beach access</field><field name="color">5</field></record>
+    <record id="amenity_metro" model="re.amenity"><field name="name">Near metro</field><field name="color">10</field></record>
+</odoo>

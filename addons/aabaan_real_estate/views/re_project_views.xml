@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="re_project_view_kanban" model="ir.ui.view">
+        <field name="name">re.project.kanban</field>
+        <field name="model">re.project</field>
+        <field name="arch" type="xml">
+            <kanban class="o_re_kanban" sample="1">
+                <field name="currency_id"/>
+                <field name="status"/>
+                <field name="available_rate"/>
+                <field name="unit_count"/>
+                <field name="available_count"/>
+                <field name="booking_percent"/>
+                <templates>
+                    <t t-name="card" class="p-0 o_re_card">
+                        <div class="o_re_cover">
+                            <field name="image_512" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <span t-attf-class="o_re_badge o_re_badge_{{record.status.raw_value}}"><field name="status"/></span>
+                            <span class="o_re_price" t-if="record.price_from.raw_value">from <field name="price_from" widget="monetary"/></span>
+                        </div>
+                        <main class="o_re_body">
+                            <div class="o_re_title"><field name="name"/></div>
+                            <div class="o_re_sub"><i class="fa fa-map-marker me-1"/><field name="community"/>, <field name="emirate"/></div>
+                            <div class="o_re_sub" t-if="record.developer_id.raw_value"><i class="fa fa-building-o me-1"/>by <field name="developer_id"/></div>
+                            <div class="o_re_chips">
+                                <span t-if="record.handover_date.raw_value"><i class="fa fa-key me-1"/>Handover <field name="handover_date" widget="date"/></span>
+                                <span t-if="record.booking_percent.raw_value"><i class="fa fa-percent me-1"/><t t-esc="record.booking_percent.raw_value"/>% on booking</span>
+                                <span t-if="record.unit_types.raw_value"><i class="fa fa-home me-1"/><field name="unit_types"/></span>
+                            </div>
+                            <div class="o_re_avail" t-if="record.unit_count.raw_value">
+                                <div class="o_re_avail_bar"><div t-attf-style="width: {{record.available_rate.raw_value}}%"/></div>
+                                <span><b><t t-esc="record.available_count.raw_value"/></b> of <t t-esc="record.unit_count.raw_value"/> units available</span>
+                            </div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="re_project_view_list" model="ir.ui.view">
+        <field name="name">re.project.list</field>
+        <field name="model">re.project</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="developer_id"/>
+                <field name="community"/>
+                <field name="emirate"/>
+                <field name="status" widget="badge" decoration-info="status == 'offplan'" decoration-success="status == 'ready'"/>
+                <field name="handover_date"/>
+                <field name="unit_types" optional="show"/>
+                <field name="price_from" widget="monetary"/>
+                <field name="available_count" string="Available"/>
+                <field name="unit_count" string="Units"/>
+                <field name="payment_plan_summary" string="Payment plan" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="re_project_view_form" model="ir.ui.view">
+        <field name="name">re.project.form</field>
+        <field name="model">re.project</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_compare" type="object" string="Print brochure" icon="fa-file-pdf-o"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_units" type="object" class="oe_stat_button" icon="fa-th-large">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="available_count"/> / <field name="unit_count"/></span>
+                                <span class="o_stat_text">Units available</span>
+                            </div>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="image" widget="image" class="oe_avatar o_re_form_cover" options="{'size': [240, 160]}"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Marina Heights"/></h1>
+                        <field name="status" widget="radio" options="{'horizontal': true}"/>
+                    </div>
+                    <group>
+                        <group string="Location">
+                            <field name="emirate"/>
+                            <field name="community"/>
+                            <field name="nearby" placeholder="Metro 5 min, schools, malls"/>
+                            <field name="map_url" widget="url"/>
+                        </group>
+                        <group string="Project">
+                            <field name="developer_id"/>
+                            <field name="handover_date"/>
+                            <field name="price_from" widget="monetary" string="Price from"/>
+                            <field name="price_to" widget="monetary" string="Price to"/>
+                            <field name="brochure" filename="brochure_name"/>
+                            <field name="brochure_name" invisible="1"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="active" invisible="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Payment plan" name="payment_plan">
+                            <field name="payment_plan_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="percent" sum="Total"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Units" name="units">
+                            <field name="unit_ids" context="{'default_project_id': id}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="unit_type"/>
+                                    <field name="bedrooms"/>
+                                    <field name="size_sqft"/>
+                                    <field name="view" optional="show"/>
+                                    <field name="price" widget="monetary"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'available'" decoration-warning="state == 'reserved'" decoration-muted="state in ('sold', 'rented')"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Description &amp; amenities" name="description">
+                            <field name="amenity_ids" widget="many2many_tags" options="{'color_field': 'color'}" placeholder="Pool, gym, kids play area…"/>
+                            <field name="description" placeholder="Describe the project for proposals and listings…"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="re_project_view_search" model="ir.ui.view">
+        <field name="name">re.project.search</field>
+        <field name="model">re.project</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="community"/>
+                <field name="developer_id"/>
+                <filter name="offplan" string="Off-plan" domain="[('status', '=', 'offplan')]"/>
+                <filter name="ready" string="Ready" domain="[('status', '=', 'ready')]"/>
+                <filter name="has_units" string="Units available" domain="[('available_count', '&gt;', 0)]"/>
+                <separator/>
+                <filter name="archived" string="Archived" domain="[('active', '=', False)]"/>
+                <filter name="g_emirate" string="Emirate" context="{'group_by': 'emirate'}"/>
+                <filter name="g_developer" string="Developer" context="{'group_by': 'developer_id'}"/>
+                <filter name="g_status" string="Off-plan / Ready" context="{'group_by': 'status'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_re_project" model="ir.actions.act_window">
+        <field name="name">Projects</field>
+        <field name="res_model">re.project</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add your first project</p>
+            <p>A project holds the photos, payment plan and units that agents match to clients and send in proposals.</p>
+        </field>
+    </record>
+
+    <record id="re_amenity_view_list" model="ir.ui.view">
+        <field name="name">re.amenity.list</field>
+        <field name="model">re.amenity</field>
+        <field name="arch" type="xml">
+            <list editable="bottom"><field name="name"/><field name="color" widget="color_picker"/></list>
+        </field>
+    </record>
+    <record id="action_re_amenity" model="ir.actions.act_window">
+        <field name="name">Amenities</field>
+        <field name="res_model">re.amenity</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

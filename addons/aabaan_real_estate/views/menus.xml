@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_re_unit_pool" model="ir.actions.act_window">
+        <field name="name">Lead pool</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('team_id.re_is_real_estate', '=', True), ('user_id', '=', False)]</field>
+        <field name="search_view_id" ref="crm.view_crm_case_opportunities_filter"/>
+    </record>
+
+    <record id="action_re_lead_analysis" model="ir.actions.act_window">
+        <field name="name">Lead sources</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('team_id.re_is_real_estate', '=', True)]</field>
+        <field name="context">{'search_default_g_re_portal': 1}</field>
+        <field name="search_view_id" ref="crm.view_crm_case_opportunities_filter"/>
+    </record>
+
+    <menuitem id="menu_re_root" name="Real Estate" sequence="12"
+              web_icon="aabaan_real_estate,static/description/icon.png"
+              groups="sales_team.group_sale_salesman"/>
+    <menuitem id="menu_re_pipeline" name="Pipeline" parent="menu_re_root" action="action_re_pipeline" sequence="1"/>
+    <menuitem id="menu_re_pool" name="Lead Pool" parent="menu_re_root" action="action_re_unit_pool" sequence="2"/>
+    <menuitem id="menu_re_inventory" name="Inventory" parent="menu_re_root" sequence="3"/>
+    <menuitem id="menu_re_projects" name="Projects" parent="menu_re_inventory" action="action_re_project" sequence="1"/>
+    <menuitem id="menu_re_units" name="Units" parent="menu_re_inventory" action="action_re_unit" sequence="2"/>
+    <menuitem id="menu_re_developers" name="Developers" parent="menu_re_inventory" action="action_re_developer" sequence="3"/>
+    <menuitem id="menu_re_reporting" name="Reporting" parent="menu_re_root" sequence="8"/>
+    <menuitem id="menu_re_report_sources" name="Lead sources" parent="menu_re_reporting" action="action_re_lead_analysis" sequence="1"/>
+    <menuitem id="menu_re_config" name="Configuration" parent="menu_re_root" sequence="9" groups="sales_team.group_sale_manager"/>
+    <menuitem id="menu_re_amenities" name="Amenities" parent="menu_re_config" action="action_re_amenity" sequence="1"/>
+    <menuitem id="menu_re_teams" name="Sales teams" parent="menu_re_config" action="sales_team.crm_team_action_config" sequence="2"/>
+</odoo>
