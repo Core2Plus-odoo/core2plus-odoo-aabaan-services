@@ -11,6 +11,8 @@
                 <field name="unit_count"/>
                 <field name="available_count"/>
                 <field name="booking_percent"/>
+                <field name="price_from"/>
+                <field name="handover_date"/>
                 <templates>
                     <t t-name="card" class="p-0 o_re_card">
                         <div class="o_re_cover">
