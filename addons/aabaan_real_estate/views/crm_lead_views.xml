@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="crm_lead_view_form_re" model="ir.ui.view">
+        <field name="name">crm.lead.form.real.estate</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_lead_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="re_is_real_estate" invisible="1"/>
+                <button name="action_re_proposal" type="object" string="Send proposal" icon="fa-file-pdf-o"
+                        class="btn-primary" invisible="not re_is_real_estate or not re_shortlist_ids"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_re_matches" type="object" class="oe_stat_button" icon="fa-magic"
+                        invisible="not re_is_real_estate">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="re_match_count"/></span>
+                        <span class="o_stat_text">Matches</span>
+                    </div>
+                </button>
+            </xpath>
+            <xpath expr="//notebook" position="before">
+                <div class="o_re_needs" invisible="not re_is_real_estate">
+                    <field name="re_temperature" widget="radio" options="{'horizontal': true}" nolabel="1"/>
+                </div>
+            </xpath>
+            <xpath expr="//notebook/page[@name='internal_notes']" position="before">
+                <page string="Property needs" name="re_needs" invisible="not re_is_real_estate">
+                    <group>
+                        <group string="The client wants">
+                            <field name="re_purpose" widget="radio" options="{'horizontal': true}"/>
+                            <field name="re_unit_type"/>
+                            <field name="re_bedrooms"/>
+                            <field name="re_status_pref"/>
+                            <label for="re_budget_min" string="Budget (AED)"/>
+                            <div class="o_row">
+                                <field name="re_budget_min" widget="monetary" nolabel="1"/>
+                                <span>to</span>
+                                <field name="re_budget_max" widget="monetary" nolabel="1"/>
+                            </div>
+                        </group>
+                        <group string="Where">
+                            <field name="re_emirate"/>
+                            <field name="re_areas" placeholder="Marina, JVC, Business Bay"/>
+                            <field name="re_portal"/>
+                            <field name="re_unit_id"/>
+                        </group>
+                    </group>
+                    <separator string="Shortlist"/>
+                    <field name="re_shortlist_ids" mode="kanban" context="{'re_lead_id': id}"
+                           options="{'no_create': True}"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_kanban_re" model="ir.ui.view">
+        <field name="name">crm.lead.kanban.real.estate</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_kanban_view_leads"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-name='card']//footer" position="before">
+                <div class="o_re_lead_tags" t-if="record.re_temperature.raw_value or record.re_portal.raw_value">
+                    <span t-if="record.re_temperature.raw_value" t-attf-class="o_re_temp o_re_temp_{{record.re_temperature.raw_value}}"><field name="re_temperature"/></span>
+                    <span t-if="record.re_portal.raw_value" class="o_re_source"><field name="re_portal"/></span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_list_re" model="ir.ui.view">
+        <field name="name">crm.lead.list.real.estate</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.crm_case_tree_view_oppor"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="re_temperature" optional="hide"/>
+                <field name="re_portal" optional="hide"/>
+                <field name="re_unit_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="crm_lead_view_search_re" model="ir.ui.view">
+        <field name="name">crm.lead.search.real.estate</field>
+        <field name="model">crm.lead</field>
+        <field name="inherit_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="re_hot" string="🔥 Hot" domain="[('re_temperature', '=', 'hot')]"/>
+                <filter name="re_warm" string="Warm" domain="[('re_temperature', '=', 'warm')]"/>
+                <filter name="re_cold" string="Cold" domain="[('re_temperature', '=', 'cold')]"/>
+                <filter name="re_pool" string="Lead pool (no agent)" domain="[('user_id', '=', False)]"/>
+                <filter name="g_re_portal" string="Lead source" context="{'group_by': 're_portal'}"/>
+                <filter name="g_re_temp" string="Temperature" context="{'group_by': 're_temperature'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_re_pipeline" model="ir.actions.act_window">
+        <field name="name">Pipeline</field>
+        <field name="res_model">crm.lead</field>
+        <field name="view_mode">kanban,list,form,graph,pivot,calendar,activity</field>
+        <field name="domain">[('team_id.re_is_real_estate', '=', True), ('type', '=', 'opportunity')]</field>
+        <field name="context">{'default_type': 'opportunity'}</field>
+        <field name="search_view_id" ref="crm.view_crm_case_opportunities_filter"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No enquiries yet</p>
+            <p>Leads from Bayut, Property Finder, Dubizzle, Meta and your website land here.</p>
+        </field>
+    </record>
+
+    <record id="crm_team_view_form_re" model="ir.ui.view">
+        <field name="name">crm.team.form.real.estate</field>
+        <field name="model">crm.team</field>
+        <field name="inherit_id" ref="sales_team.crm_team_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="re_is_real_estate"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

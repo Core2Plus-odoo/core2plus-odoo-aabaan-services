@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="re_developer_view_kanban" model="ir.ui.view">
+        <field name="name">re.developer.kanban</field>
+        <field name="model">re.developer</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <templates>
+                    <t t-name="card" class="flex-row align-items-center">
+                        <aside class="me-3"><field name="logo" widget="image" options="{'size': [64, 64], 'img_class': 'object-fit-contain'}"/></aside>
+                        <main>
+                            <div class="fw-bold fs-5"><field name="name"/></div>
+                            <div class="text-muted"><field name="project_count"/> projects</div>
+                        </main>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+    <record id="re_developer_view_form" model="ir.ui.view">
+        <field name="name">re.developer.form</field>
+        <field name="model">re.developer</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="logo" widget="image" class="oe_avatar"/>
+                    <div class="oe_title"><h1><field name="name" placeholder="e.g. Emaar"/></h1></div>
+                    <group><field name="website" widget="url"/><field name="active" invisible="1"/></group>
+                    <field name="project_ids" readonly="1">
+                        <list><field name="name"/><field name="community"/><field name="status"/><field name="handover_date"/><field name="available_count"/></list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="re_developer_view_list" model="ir.ui.view">
+        <field name="name">re.developer.list</field>
+        <field name="model">re.developer</field>
+        <field name="arch" type="xml">
+            <list><field name="name"/><field name="project_count"/><field name="website"/></list>
+        </field>
+    </record>
+    <record id="action_re_developer" model="ir.actions.act_window">
+        <field name="name">Developers</field>
+        <field name="res_model">re.developer</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+</odoo>

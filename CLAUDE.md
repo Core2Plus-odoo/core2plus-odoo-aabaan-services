@@ -128,6 +128,16 @@ creating a new one.
     registration and insurance expiry on `fleet.vehicle`, read by the
     Budget Dashboard's Renewals & Compliance section. Not auto-installed;
     install it from Apps (it pulls in Fleet).
+10c. `aabaan_real_estate` — **Aabaan Real Estate** (separate business, own
+    app "Real Estate"): developers, projects, units with photos and payment
+    plans; a real-estate CRM team with its own stages; lead requirements,
+    temperature, portal source, matching units, shortlist and a branded
+    proposal PDF; project comparison PDF. Portal integration in
+    `controllers/main.py`: `/re/feed/<portal>.xml` (listings out, units
+    ticked for Bayut / Property Finder / Dubizzle) and `/re/lead/<token>`
+    (enquiries in; token in `aabaan_real_estate.lead_token`). The feed uses
+    common UAE portal fields; map to each portal's exact spec when the
+    account is connected. Installed from Apps, not auto-installed.
 11. `fm_aabaan_config` — **seed data**: branches, service categories, UAE
     compliance regimes, service products. Makes the platform Aabaan-ready.
 12. `fm_portal` — **the customer portal** (`/my`). Invoices + online payment
