@@ -13,6 +13,7 @@
                 <field name="publish_propertyfinder"/>
                 <field name="publish_dubizzle"/>
                 <field name="purpose"/>
+                <field name="price"/>
                 <progressbar field="state" colors='{"available": "success", "reserved": "warning", "sold": "danger", "rented": "info"}'/>
                 <templates>
                     <t t-name="card" class="p-0 o_re_card">
