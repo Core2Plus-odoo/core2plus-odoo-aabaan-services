@@ -19,7 +19,7 @@
 
     <menuitem id="menu_re_root" name="Real Estate" sequence="12"
               web_icon="aabaan_real_estate,static/description/icon.png"
-              groups="sales_team.group_sale_salesman"/>
+              groups="aabaan_real_estate.group_re_user"/>
     <menuitem id="menu_re_pipeline" name="Pipeline" parent="menu_re_root" action="action_re_pipeline" sequence="1"/>
     <menuitem id="menu_re_pool" name="Lead Pool" parent="menu_re_root" action="action_re_unit_pool" sequence="2"/>
     <menuitem id="menu_re_inventory" name="Inventory" parent="menu_re_root" sequence="3"/>
@@ -28,7 +28,7 @@
     <menuitem id="menu_re_developers" name="Developers" parent="menu_re_inventory" action="action_re_developer" sequence="3"/>
     <menuitem id="menu_re_reporting" name="Reporting" parent="menu_re_root" sequence="8"/>
     <menuitem id="menu_re_report_sources" name="Lead sources" parent="menu_re_reporting" action="action_re_lead_analysis" sequence="1"/>
-    <menuitem id="menu_re_config" name="Configuration" parent="menu_re_root" sequence="9" groups="sales_team.group_sale_manager"/>
+    <menuitem id="menu_re_config" name="Configuration" parent="menu_re_root" sequence="9" groups="aabaan_real_estate.group_re_manager"/>
     <menuitem id="menu_re_amenities" name="Amenities" parent="menu_re_config" action="action_re_amenity" sequence="1"/>
     <menuitem id="menu_re_teams" name="Sales teams" parent="menu_re_config" action="sales_team.crm_team_action_config" sequence="2"/>
 </odoo>

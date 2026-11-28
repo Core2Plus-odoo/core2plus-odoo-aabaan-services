@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Aabaan Real Estate',
-    'version': '19.0.1.2.0',
+    'version': '19.0.1.3.0',
     'category': 'Sales/CRM',
     'summary': 'Property inventory, matchmaking and branded proposals on Odoo CRM',
     'description': """
