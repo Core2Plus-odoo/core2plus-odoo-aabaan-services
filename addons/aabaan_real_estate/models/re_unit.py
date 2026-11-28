@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
+from .re_project import short_aed
+
 UNIT_TYPES = [
     ('apartment', 'Apartment'), ('studio', 'Studio'), ('penthouse', 'Penthouse'),
     ('townhouse', 'Townhouse'), ('villa', 'Villa'), ('office', 'Office'),
@@ -53,6 +55,12 @@ class ReUnit(models.Model):
     ], default='available', required=True, tracking=True, group_expand=True)
     lead_ids = fields.Many2many('crm.lead', 're_lead_unit_rel', 'unit_id', 'lead_id', string='Shortlisted for')
     beds_label = fields.Char(compute='_compute_beds_label')
+    price_label = fields.Char(compute='_compute_price_label')
+
+    @api.depends('price')
+    def _compute_price_label(self):
+        for u in self:
+            u.price_label = short_aed(u.price)
 
     _reference_unique = models.Constraint('UNIQUE(reference)', 'Listing references must be unique.')
 

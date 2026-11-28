@@ -14,16 +14,17 @@
                 <templates>
                     <t t-name="card" class="p-0 o_re_card">
                         <div class="o_re_cover">
-                            <field name="image_512" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <field invisible="not image_512" name="image_512" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <div t-if="!record.image_512.raw_value" class="o_re_noimg"><i class="fa fa-building"/></div>
                             <span t-attf-class="o_re_badge o_re_badge_{{record.status.raw_value}}"><field name="status"/></span>
-                            <span class="o_re_price" t-if="record.price_from.raw_value">from <field name="price_from" widget="monetary"/></span>
+                            <span class="o_re_price" t-if="record.price_from.raw_value">from <field name="price_label"/></span>
                         </div>
                         <main class="o_re_body">
                             <div class="o_re_title"><field name="name"/></div>
                             <div class="o_re_sub"><i class="fa fa-map-marker me-1"/><field name="community"/>, <field name="emirate"/></div>
                             <div class="o_re_sub" t-if="record.developer_id.raw_value"><i class="fa fa-building-o me-1"/>by <field name="developer_id"/></div>
                             <div class="o_re_chips">
-                                <span t-if="record.handover_date.raw_value"><i class="fa fa-key me-1"/>Handover <field name="handover_date" widget="date"/></span>
+                                <span t-if="record.handover_label.raw_value"><i class="fa fa-key me-1"/>Handover <field name="handover_label"/></span>
                                 <span t-if="record.booking_percent.raw_value"><i class="fa fa-percent me-1"/><t t-esc="record.booking_percent.raw_value"/>% on booking</span>
                                 <span t-if="record.unit_types.raw_value"><i class="fa fa-home me-1"/><field name="unit_types"/></span>
                             </div>

@@ -17,9 +17,10 @@
                 <templates>
                     <t t-name="card" class="p-0 o_re_card">
                         <div class="o_re_cover o_re_cover_sm">
-                            <field name="cover" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <field invisible="not cover" name="cover" widget="image" options="{'img_class': 'o_re_cover_img'}"/>
+                            <div t-if="!record.cover.raw_value" class="o_re_noimg"><i class="fa fa-home"/></div>
                             <span t-attf-class="o_re_badge o_re_state_{{record.state.raw_value}}"><field name="state"/></span>
-                            <span class="o_re_price"><field name="price" widget="monetary"/><t t-if="record.purpose.raw_value === 'rent'"> /yr</t></span>
+                            <span class="o_re_price"><field name="price_label"/><t t-if="record.purpose.raw_value === 'rent'"> /yr</t></span>
                         </div>
                         <main class="o_re_body">
                             <div class="o_re_title"><field name="project_id"/> · <field name="name"/></div>

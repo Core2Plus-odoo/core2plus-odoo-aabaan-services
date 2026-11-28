@@ -102,7 +102,7 @@
         <field name="res_model">crm.lead</field>
         <field name="view_mode">kanban,list,form,graph,pivot,calendar,activity</field>
         <field name="domain">[('team_id.re_is_real_estate', '=', True), ('type', '=', 'opportunity')]</field>
-        <field name="context">{'default_type': 'opportunity'}</field>
+        <field name="context" eval="{'default_type': 'opportunity', 'default_team_id': ref('aabaan_real_estate.crm_team_real_estate')}"/>
         <field name="search_view_id" ref="crm.view_crm_case_opportunities_filter"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No enquiries yet</p>

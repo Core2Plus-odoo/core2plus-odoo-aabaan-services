@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
+def short_aed(value):
+    if not value:
+        return ''
+    if value >= 1_000_000:
+        return 'AED %sM' % ('%.2f' % (value / 1_000_000)).rstrip('0').rstrip('.')
+    if value >= 1_000:
+        return 'AED %sK' % ('%.1f' % (value / 1_000)).rstrip('0').rstrip('.')
+    return 'AED %d' % value
+
+
 EMIRATES = [
     ('dubai', 'Dubai'), ('abu_dhabi', 'Abu Dhabi'), ('sharjah', 'Sharjah'),
     ('ajman', 'Ajman'), ('rak', 'Ras Al Khaimah'), ('uaq', 'Umm Al Quwain'),
@@ -44,6 +54,14 @@ class ReProject(models.Model):
     unit_types = fields.Char(compute='_compute_units', store=True)
     currency_id = fields.Many2one('res.currency', default=lambda s: s.env.company.currency_id)
     color = fields.Integer()
+    price_label = fields.Char(compute='_compute_labels')
+    handover_label = fields.Char(compute='_compute_labels')
+
+    @api.depends('price_from', 'handover_date')
+    def _compute_labels(self):
+        for p in self:
+            p.price_label = short_aed(p.price_from)
+            p.handover_label = p.handover_date.strftime('%b %Y') if p.handover_date else ''
 
     @api.depends('payment_plan_ids.percent', 'payment_plan_ids.name')
     def _compute_payment_plan_summary(self):
